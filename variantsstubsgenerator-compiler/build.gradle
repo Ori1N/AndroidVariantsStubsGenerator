@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+
+    // compile the annotation
+    compile project(':variantsstubsgenerator-annotation')
+
+    // for saving the AnnotationProcessor info in META_INF
+    compile 'com.google.auto.service:auto-service:1.0-rc2'
+
+    // for generating Java files
+    compile 'com.squareup:javapoet:1.7.0'
+
+}

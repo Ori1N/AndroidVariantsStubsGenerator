@@ -8,13 +8,17 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/sample" />
+            <option value="$PROJECT_DIR$/variantsstubsgenerator-annotation" />
+            <option value="$PROJECT_DIR$/variantsstubsgenerator-compiler" />
           </set>
         </option>
         <option name="myModules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/sample" />
+            <option value="$PROJECT_DIR$/variantsstubsgenerator-annotation" />
+            <option value="$PROJECT_DIR$/variantsstubsgenerator-compiler" />
           </set>
         </option>
       </GradleProjectSettings>
