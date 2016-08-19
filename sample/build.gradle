@@ -1,13 +1,3 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-    }
-}
-
 apply plugin: 'com.android.application'
 apply plugin: 'android-apt'
 
@@ -39,11 +29,17 @@ android {
 }
 
 dependencies {
+
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:24.1.1'
-    testCompile 'junit:junit:4.12'
+
+    compile 'com.android.support:appcompat-v7:24.2.0'
 
     compile project(':variantsstubsgenerator-annotation')
     apt project(':variantsstubsgenerator-compiler')
+
+    compile 'com.jakewharton:butterknife:8.2.1'
+    apt 'com.jakewharton:butterknife-compiler:8.2.1'
+
+    testCompile 'junit:junit:4.12'
 
 }

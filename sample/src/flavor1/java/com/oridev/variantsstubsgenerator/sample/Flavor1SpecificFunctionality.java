@@ -11,10 +11,8 @@ import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 @RequiresVariantStub("flavor2")
 public class Flavor1SpecificFunctionality {
 
-    private static final String TAG = Flavor1SpecificFunctionality.class.getSimpleName();
-
-    public static void func1() {
-        Log.d(TAG, "func1 called");
+    public static String getFlavor1Message() {
+        return "this is flavor1";
     }
 
 }

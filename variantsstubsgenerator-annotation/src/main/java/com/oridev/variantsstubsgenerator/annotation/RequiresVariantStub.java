@@ -6,10 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Ori on 18/08/2016.
+ * Indicates that this class requires stubs in different flavor.
+ * This annotation generates java files containing stubs of all the public methods.
+ * The return value is default (null, 0, false).
  */
-
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface RequiresVariantStub {
     String value();
