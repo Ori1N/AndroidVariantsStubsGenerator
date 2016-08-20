@@ -13,5 +13,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface RequiresVariantStub {
-    String value();
+
+    /**
+     * The name of the current flavor.
+     * \nIf not using flavor dimension then this should be {@code BuildConfig.FLAVOR }.
+     * \nIf using flavor dimensions then this should be {@code BuildConfig.FLAVOR_{specific-flavor}}
+     */
+    String flavorFrom();
+
+    /**
+     * The name of the flavor we want to generate the stub class into.
+     */
+    String flavorTo();
+
+
+    boolean throwException() default false;
+
 }

@@ -23,7 +23,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void showMessage() {
         String text1 = Flavor1SpecificFunctionality.getFlavor1Message();
-        messageView.setText(text1);
-        //String text2 = Flavor2SpecificFunctionality
+        if (text1 != null) {
+            messageView.setText(text1);
+        } else {
+            messageView.setText("Received null from method, probably shouldn't use class Flavor1SpecificFunctionality from flavor1 code!");
+        }
+
+        try {
+            String text2 = Flavor2SpecificFunctionality.getFlavor2MessageOrThrow();
+        } catch (Exception e) {
+
+        }
     }
 }
