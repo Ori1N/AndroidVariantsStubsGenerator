@@ -4,12 +4,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.oridev.variantsstubsgenerator.sample.Flavor2SpecificFunctionality;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity {
 
-    @BindView(R.id.main_text) TextView messageView;
+    @BindView(R.id.main_text1) TextView message1View;
+    @BindView(R.id.main_text2) TextView message2View;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,21 +21,28 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        showMessage();
+        showMessages();
     }
 
-    private void showMessage() {
+    private void showMessages() {
+        String message1, message2;
+
         String text1 = Flavor1SpecificFunctionality.getFlavor1Message();
         if (text1 != null) {
-            messageView.setText(text1);
+            message1 = text1;
         } else {
-            messageView.setText("Received null from method, probably shouldn't use class Flavor1SpecificFunctionality from flavor1 code!");
+            // this means we called flavor1 method from flavor2
+            message1 = "Got null, probably shouldn't have called flavor1 method from flavor2...";
         }
 
         try {
-            String text2 = Flavor2SpecificFunctionality.getFlavor2MessageOrThrow();
+            message2 = Flavor2SpecificFunctionality.getFlavor2MessageOrThrow();
         } catch (Exception e) {
-
+            // this means we called flavor2 method from flavor1 and specified to throw exception if trying to use stubs
+            message2 = "Got exception... good thing it's not in production yet...";
         }
+
+        message1View.setText(message1);
+        message2View.setText(message2);
     }
 }

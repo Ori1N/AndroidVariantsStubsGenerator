@@ -8,10 +8,17 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,15 +27,18 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileAttribute;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Completion;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -39,9 +49,12 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
 
 @AutoService(Processor.class)
@@ -50,6 +63,8 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     private Elements elementUtils;
     private Types typesUtils;
     private Filer filer;
+
+    private boolean mFirstRound = true;
 
     @Override
     public synchronized void init(ProcessingEnvironment env) {
@@ -78,15 +93,37 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return SourceVersion.latestSupported();
     }
 
+
+//    /**
+//     * For debugging!! yeah!!
+//     */
+//    public static void main(String[] args) {
+//        try {
+//            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+//            JavaFileManager manager = compiler.getStandardFileManager(null, null, null);
+//                //new DiagnosticCollector<JavaFileObject>(), Locale.getDefault(), Charset.defaultCharset());
+//            //Path source = Files.get createTempDirectory("stackoverflow").resolve("Test.java");
+//
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+
+//        if (!mFirstRound) {
+//            logMessage(Diagnostic.Kind.NOTE, "process already called, skipping..");
+//            return true;
+//        }
+//        mFirstRound = false;
 
         // collect all the annotated classes
         Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(RequiresVariantStub.class);
         for (Element element : elements) {
+            logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + element.getSimpleName());
             TypeElement classElement = (TypeElement) element;
-
-            logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + classElement.getSimpleName());
 
             // get annotation parameters
             final String flavorFrom = element.getAnnotation(RequiresVariantStub.class).flavorFrom();
@@ -98,9 +135,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 //            }
 
             // start building the java stubs file
-
             try {
-
                 // Create the duplicate class
                 TypeSpec.Builder classBuilder = TypeSpec.classBuilder(classElement.getSimpleName().toString());
                 Modifier[] classModifiers = classElement.getModifiers().toArray(new Modifier[classElement.getModifiers().size()]);
@@ -121,8 +156,11 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                                     .returns(TypeName.get(methodReturnType));
 
                             if (throwException) {
+                                // add throw statement
                                 methodBuilder.addStatement("throw new $T($S, $S)", AttemptToUseStubException.class, flavorFrom, flavorTo);
+
                             } else if (methodReturnType.getKind() != TypeKind.VOID) {
+                                // add return statement if required
                                 methodBuilder.addStatement("return " + getDefaultReturnTypeForTypeMirror(methodReturnType));
                             }
 
@@ -130,26 +168,27 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                         }
 
                         // todo: handle non methods elements! */
-
                     }
                 }
-
 
                 // write the new file
                 String classPackage = classElement.getQualifiedName().toString();
                 classPackage = classPackage.substring(0, classPackage.lastIndexOf('.')); // todo: handle inner classes!
 
                 JavaFile file = JavaFile.builder(classPackage, classBuilder.build())
-                        .addFileComment("Generated code from VariantsStubsGenerator library. Do not modify!")
+                        .addFileComment("Generated code from VariantsStubsGenerator library. Do not modify!\n")
                         .build();
 
                 writeSourceFile(file, flavorFrom, flavorTo);
 
-            } catch (Exception e) {
-                logMessage(Diagnostic.Kind.ERROR, "");
+                logMessage(Diagnostic.Kind.NOTE, "Processing done.");
+
+            } catch (Throwable e) {
+                logMessage(Diagnostic.Kind.NOTE, "Processing failed: " + e);
             }
         }
 
+        logMessage(Diagnostic.Kind.NOTE, "All processing done.");
         return true;
     }
 
@@ -157,7 +196,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
         String fileName = javaFile.packageName.isEmpty()
                 ? javaFile.typeSpec.name
-                : javaFile.packageName + "." + javaFile.typeSpec.name;
+                : javaFile.packageName + "._d_" + javaFile.typeSpec.name;
         List<Element> originatingElements = javaFile.typeSpec.originatingElements;
         JavaFileObject filerSourceFile = filer.createSourceFile(fileName,
                 originatingElements.toArray(new Element[originatingElements.size()]));
@@ -171,23 +210,62 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             throw e;
         }
 
-        // move the file to location
-        URI uri = filerSourceFile.toUri();
-        File generatedFile = new File(uri);
-        String targetPathStr = generatedFile.getPath().replace(flavorFrom, flavorTo);
-        File targetFile = new File(targetPathStr);
-        logMessage(Diagnostic.Kind.NOTE, "moving file " + generatedFile + " to: " + targetFile);
+        File generatedFile = new File(filerSourceFile.toUri());
 
+        // move the file to location
+        String targetPathStr = generatedFile.getPath()
+                .replace(flavorFrom, flavorTo)
+                .replace("/_d_" + javaFile.typeSpec.name, "/" + javaFile.typeSpec.name);
+        File targetDirectory = new File(targetPathStr);
+        logMessage(Diagnostic.Kind.NOTE, "moving generated file to " + targetDirectory);
+
+        if (!targetDirectory.exists()) {
+            Files.createDirectories(targetDirectory.toPath());
+        }
         try {
-            Files.createDirectories(targetFile.getParentFile().toPath());
-            Files.move(generatedFile.toPath(), targetFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+            javaFile.writeTo(targetDirectory);
+            //Files.copy(generatedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING /*, StandardCopyOption.ATOMIC_MOVE */);
             logMessage(Diagnostic.Kind.NOTE, "Move successful");
         } catch (Exception e) {
-            logMessage(Diagnostic.Kind.WARNING, "Error moving file: " + e);
+            logMessage(Diagnostic.Kind.NOTE, "Error moving file: " + e);
         }
 
-        //generatedFile.renameTo(new File())
+        // change file in flavorFrom's class name to temp name
+        Path path = Paths.get(filerSourceFile.toUri());
+        Charset charset = StandardCharsets.UTF_8;
+        String content = new String(Files.readAllBytes(path), charset);
+        content = content.replaceAll("class " + javaFile.typeSpec.name, "class " + "_d_" + javaFile.typeSpec.name);
+        Files.write(path, content.getBytes(charset));
+
+
+
+        /* close filer (no compilation error but now gradle doesn't consider generated files */
+//        if (filer instanceof Closeable) {
+//            filerSourceFile.delete();
+//            try {
+//                ((Closeable) filer).close();
+//
+//            } catch (Exception e) {
+//                logMessage(Diagnostic.Kind.WARNING, "Failed to close filer: " + e);
+//            }
+//        }
+
+        /* delete file after moving (didn't help) */
+//        try {
+//            //Runtime.getRuntime().exec("rm ./.gradle/2.14.1/taskArtifacts/cache.properties.lock");
+//
+//            boolean deleted = filerSourceFile.delete();
+//            //filer.getResource(StandardLocation.SOURCE_OUTPUT, javaFile.packageName, javaFile.typeSpec.name).delete();
+//            if (!deleted /*|| !filerSourceFile.delete() */) {
+//                logMessage(Diagnostic.Kind.NOTE, "Error deleting file");
+//
+//            }
+//        } catch (Exception e) {
+//            logMessage(Diagnostic.Kind.NOTE, "Failed to delete file: " + e);
+//        }
+
     }
+
 
     private Object getDefaultReturnTypeForTypeMirror(TypeMirror type) {
         TypeName typeName = TypeName.get(type);
@@ -217,6 +295,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             e.printStackTrace();
         }
     }
+
 
     /* V2 - use of android apt example, working! :) */
 //    @Override

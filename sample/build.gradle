@@ -43,3 +43,12 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
 }
+
+
+sourceSets {
+    apt{
+        java{
+            srcDir 'build/generated/source/apt'
+        }
+    }
+}
