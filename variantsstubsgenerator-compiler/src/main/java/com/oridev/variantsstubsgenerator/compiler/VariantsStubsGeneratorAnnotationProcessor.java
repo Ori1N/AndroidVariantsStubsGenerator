@@ -1,5 +1,6 @@
 package com.oridev.variantsstubsgenerator.compiler;
 
+import com.google.auto.common.SuperficialValidation;
 import com.google.auto.service.AutoService;
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 import com.oridev.variantsstubsgenerator.exception.AttemptToUseStubException;
@@ -8,37 +9,28 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.net.URI;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileAttribute;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Completion;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -49,17 +41,15 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
-import javax.tools.DiagnosticCollector;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileManager;
+import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
 
 
 @AutoService(Processor.class)
 public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor {
 
+    private ProcessingEnvironment environment;
     private Elements elementUtils;
     private Types typesUtils;
     private Filer filer;
@@ -69,6 +59,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     @Override
     public synchronized void init(ProcessingEnvironment env) {
         super.init(env);
+        environment = env;
         elementUtils = env.getElementUtils();
         typesUtils = env.getTypeUtils();
         filer = env.getFiler();
@@ -81,12 +72,13 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return types;
     }
 
-//    @Override
-//    public Set<String> getSupportedOptions() {
-//        Set<String> options = new LinkedHashSet<>();
-//        options.add("flavor");
-//        return options;
-//    }
+    @Override
+    public Set<String> getSupportedOptions() {
+        Set<String> options = new LinkedHashSet<>();
+        options.add("variantName");
+        options.add("resourcePackageName");
+        return options;
+    }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -113,96 +105,126 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-//        if (!mFirstRound) {
-//            logMessage(Diagnostic.Kind.NOTE, "process already called, skipping..");
-//            return true;
-//        }
-//        mFirstRound = false;
-
         // collect all the annotated classes
         Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(RequiresVariantStub.class);
         for (Element element : elements) {
-            logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + element.getSimpleName());
-            TypeElement classElement = (TypeElement) element;
 
-            // get annotation parameters
-            final String flavorFrom = element.getAnnotation(RequiresVariantStub.class).flavorFrom();
-            final String flavorTo = element.getAnnotation(RequiresVariantStub.class).flavorTo();
-            final boolean throwException = element.getAnnotation(RequiresVariantStub.class).throwException();
+            if (!SuperficialValidation.validateElement(element)) {
+                continue;
+            }
 
-//            if (!SuperficialValidation.validateElement(element)) {
-//                continue;
-//            }
+            JavaFile file = generateStubJavaFile((TypeElement) element);
 
-            // start building the java stubs file
+            RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
+            final String flavorFrom = annotation.flavorFrom();
+            final String flavorTo = annotation.flavorTo();
+
             try {
-                // Create the duplicate class
-                TypeSpec.Builder classBuilder = TypeSpec.classBuilder(classElement.getSimpleName().toString());
-                Modifier[] classModifiers = classElement.getModifiers().toArray(new Modifier[classElement.getModifiers().size()]);
-                classBuilder.addModifiers(classModifiers);
 
-                // for each public element inside the annotated class
-                for (Element classInnerElement : classElement.getEnclosedElements()) {
-                    if (classInnerElement.getModifiers().contains(Modifier.PUBLIC)) {
+                if (!doesClassExist(file, flavorFrom, flavorTo)) {
 
-                        // create stubs for methods
-                        if (classInnerElement.getKind() == ElementKind.METHOD) {
-                            ExecutableElement method = (ExecutableElement) classInnerElement;
+                    String path = writeSourceFile(file, flavorFrom, flavorTo);
+                    logMessage(Diagnostic.Kind.NOTE, "Processing done.");
 
-                            TypeMirror methodReturnType = method.getReturnType();
-
-                            MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.getSimpleName().toString())
-                                    .addModifiers(method.getModifiers())
-                                    .returns(TypeName.get(methodReturnType));
-
-                            if (throwException) {
-                                // add throw statement
-                                methodBuilder.addStatement("throw new $T($S, $S)", AttemptToUseStubException.class, flavorFrom, flavorTo);
-
-                            } else if (methodReturnType.getKind() != TypeKind.VOID) {
-                                // add return statement if required
-                                methodBuilder.addStatement("return " + getDefaultReturnTypeForTypeMirror(methodReturnType));
-                            }
-
-                            classBuilder.addMethod(methodBuilder.build());
-                        }
-
-                        // todo: handle non methods elements! */
-                    }
+                    //addSourceFilesToFiler(path);
                 }
-
-                // write the new file
-                String classPackage = classElement.getQualifiedName().toString();
-                classPackage = classPackage.substring(0, classPackage.lastIndexOf('.')); // todo: handle inner classes!
-
-                JavaFile file = JavaFile.builder(classPackage, classBuilder.build())
-                        .addFileComment("Generated code from VariantsStubsGenerator library. Do not modify!\n")
-                        .build();
-
-                writeSourceFile(file, flavorFrom, flavorTo);
-
-                logMessage(Diagnostic.Kind.NOTE, "Processing done.");
 
             } catch (Throwable e) {
                 logMessage(Diagnostic.Kind.NOTE, "Processing failed: " + e);
             }
         }
 
-        logMessage(Diagnostic.Kind.NOTE, "All processing done.");
+        if (mFirstRound) {
+            //addSourceFilesToFiler();
+            mFirstRound = false;
+        }
+
         return true;
     }
 
-    private void writeSourceFile(JavaFile javaFile, String flavorFrom, String flavorTo) throws IOException {
+    private JavaFile generateStubJavaFile(TypeElement element) {
+        logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + element.getSimpleName());
 
+        // get annotation parameters
+        RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
+        final boolean throwException = annotation.throwException();
+
+        // start building the java stubs file
+        try {
+            // Create the duplicate class
+            TypeSpec.Builder classBuilder = TypeSpec.classBuilder(element.getSimpleName().toString());
+            Modifier[] classModifiers = element.getModifiers().toArray(new Modifier[element.getModifiers().size()]);
+            classBuilder.addModifiers(classModifiers);
+
+            // for each public element inside the annotated class
+            for (Element classInnerElement : element.getEnclosedElements()) {
+                if (classInnerElement.getModifiers().contains(Modifier.PUBLIC)) {
+
+                    // create stubs for methods
+                    if (classInnerElement.getKind() == ElementKind.METHOD) {
+                        ExecutableElement method = (ExecutableElement) classInnerElement;
+
+                        TypeMirror methodReturnType = method.getReturnType();
+
+                        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.getSimpleName().toString())
+                                .addModifiers(method.getModifiers())
+                                .returns(TypeName.get(methodReturnType));
+
+                        if (throwException) {
+                            // add throw statement
+                            methodBuilder.addStatement("throw new $T($S, $S)", AttemptToUseStubException.class,
+                                    annotation.flavorFrom(), annotation.flavorTo());
+
+                        } else if (methodReturnType.getKind() != TypeKind.VOID) {
+                            // add return statement if required
+                            methodBuilder.addStatement("return " + getDefaultReturnTypeForTypeMirror(methodReturnType));
+                        }
+
+                        classBuilder.addMethod(methodBuilder.build());
+                    }
+
+                    // todo: handle non methods elements! */
+                }
+            }
+
+            // write the new file
+            String classPackage = element.getQualifiedName().toString();
+            classPackage = classPackage.substring(0, classPackage.lastIndexOf('.')); // todo: handle inner classes!
+
+            return JavaFile.builder(classPackage, classBuilder.build())
+                    .addFileComment("Generated code from VariantsStubsGenerator library. Do not modify!")
+                    .build();
+
+        } catch (Exception e) {
+            logMessage(Diagnostic.Kind.WARNING, "generateStubJavaFile failure: " + e);
+            return null;
+        }
+    }
+
+    private boolean doesClassExist(JavaFile file, String flavorFrom, String flavorTo) {
+        try {
+            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, file.packageName, file.typeSpec.name);
+            return fileObj != null;
+        } catch (IOException e) {
+            logMessage(Diagnostic.Kind.WARNING, "doesClassExist failure: " + e);
+        }
+        return false;
+    }
+
+    private String writeSourceFile(JavaFile javaFile, String flavorFrom, String flavorTo) throws IOException {
+        final String EXT = "_d_";
+
+        // create draft file (copy of the file we want to create but in flavorFrom)
         String fileName = javaFile.packageName.isEmpty()
                 ? javaFile.typeSpec.name
-                : javaFile.packageName + "._d_" + javaFile.typeSpec.name;
+                : javaFile.packageName + "." + EXT + javaFile.typeSpec.name;
         List<Element> originatingElements = javaFile.typeSpec.originatingElements;
         JavaFileObject filerSourceFile = filer.createSourceFile(fileName,
                 originatingElements.toArray(new Element[originatingElements.size()]));
         try (Writer writer = filerSourceFile.openWriter()) {
             javaFile.writeTo(writer);
         } catch (Exception e) {
+            logMessage(Diagnostic.Kind.WARNING, "Failed to write draft file: " + e);
             try {
                 filerSourceFile.delete();
             } catch (Exception ignored) {
@@ -210,45 +232,54 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             throw e;
         }
 
+        // get the desired target path
         File generatedFile = new File(filerSourceFile.toUri());
-
-        // move the file to location
         String targetPathStr = generatedFile.getPath()
+                // set path to flavorTo
                 .replace(flavorFrom, flavorTo)
-                .replace("/_d_" + javaFile.typeSpec.name, "/" + javaFile.typeSpec.name);
-        File targetDirectory = new File(targetPathStr);
-        logMessage(Diagnostic.Kind.NOTE, "moving generated file to " + targetDirectory);
+                // remove extension from file name
+                .replace("/" + EXT + javaFile.typeSpec.name, "/" + javaFile.typeSpec.name);
+        File targetFile = new File(targetPathStr);
+        File targetDirectory = targetFile.getParentFile();
 
+        // copy the draft file to the real location (flavorTo)
+        logMessage(Diagnostic.Kind.NOTE, "copying generated file to " + targetDirectory);
         if (!targetDirectory.exists()) {
             Files.createDirectories(targetDirectory.toPath());
         }
+        FileWriter fileWriter = null;
         try {
-            javaFile.writeTo(targetDirectory);
+            fileWriter = new FileWriter(targetFile);
+            javaFile.writeTo(fileWriter);
             //Files.copy(generatedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING /*, StandardCopyOption.ATOMIC_MOVE */);
             logMessage(Diagnostic.Kind.NOTE, "Move successful");
         } catch (Exception e) {
-            logMessage(Diagnostic.Kind.NOTE, "Error moving file: " + e);
+            logMessage(Diagnostic.Kind.WARNING, "Error moving file: " + e);
+        } finally {
+            if (fileWriter != null) {
+                try { fileWriter.close(); }
+                catch (IOException e) { }
+            }
         }
 
-        // change file in flavorFrom's class name to temp name
+        // change draft file in flavorFrom's class name to temp name
         Path path = Paths.get(filerSourceFile.toUri());
         Charset charset = StandardCharsets.UTF_8;
         String content = new String(Files.readAllBytes(path), charset);
-        content = content.replaceAll("class " + javaFile.typeSpec.name, "class " + "_d_" + javaFile.typeSpec.name);
+        content = content.replaceAll("class " + javaFile.typeSpec.name, "class " + EXT + javaFile.typeSpec.name);
         Files.write(path, content.getBytes(charset));
-
 
 
         /* close filer (no compilation error but now gradle doesn't consider generated files */
 //        if (filer instanceof Closeable) {
-//            filerSourceFile.delete();
 //            try {
 //                ((Closeable) filer).close();
-//
 //            } catch (Exception e) {
 //                logMessage(Diagnostic.Kind.WARNING, "Failed to close filer: " + e);
 //            }
 //        }
+
+        return targetPathStr;
 
         /* delete file after moving (didn't help) */
 //        try {
@@ -264,6 +295,40 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 //            logMessage(Diagnostic.Kind.NOTE, "Failed to delete file: " + e);
 //        }
 
+    }
+
+    private void addSourceFilesToFiler(final String file) {
+
+        JavaFileObject fileObj = null;
+        try {
+
+//            fileObj = filer.getResource(new JavaFileManager.Location() {
+//                @Override
+//                public String getName() {
+//                    return file.substring(0, );
+//                }
+//
+//                @Override
+//                public boolean isOutputLocation() {
+//                    return false;
+//                }
+//            }, )
+
+            /* */
+
+            String fileName = "com.oridev.variantsstubsgenerator.sample.Flavor2SpecificFunctionality";
+            fileObj = filer.createSourceFile(fileName);
+            logMessage(Diagnostic.Kind.NOTE, "Added file to filer " + fileObj.getName());
+
+            //executeTestMethod();
+
+        } catch (Exception e) {
+            logMessage(Diagnostic.Kind.WARNING, "Failed to add file to filer: " + e);
+        } finally {
+            if (fileObj != null) {
+                //filer.
+            }
+        }
     }
 
 
@@ -295,6 +360,32 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             e.printStackTrace();
         }
     }
+
+//    private void executeTestMethod() {
+//
+//        Class<? extends Filer> type = filer.getClass();
+//        String methodName = "newRound";
+//
+//        Exception error = null;
+//        Method method = null;
+//        try {
+//            method = type.getMethod(methodName, com.sun.tools.javac.util.Context.class);
+//
+//            try {
+//                method.invoke(type, new com.sun.tools.javac.util.Context());
+//            } catch (SecurityException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+//                error = e;
+//
+//            }
+//
+//        } catch (NoSuchMethodException e) {
+//            error = e;
+//        }
+//
+//        if (error != null) {
+//            logMessage(Diagnostic.Kind.WARNING, "Invoking method failed: " + error);
+//        }
+//    }
 
 
     /* V2 - use of android apt example, working! :) */

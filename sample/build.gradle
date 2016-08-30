@@ -1,5 +1,21 @@
 apply plugin: 'com.android.application'
+apply plugin: 'idea'
 apply plugin: 'android-apt'
+
+//sourceSets {
+//    apt {
+//        java {
+//            srcDir 'build/generated/source/apt'
+//        }
+//    }
+//}
+
+apt {
+    arguments {
+        variantName variant.name
+        resourcePackageName android.defaultConfig.applicationId
+    }
+}
 
 android {
     compileSdkVersion 24
@@ -26,7 +42,34 @@ android {
         flavor2 {}
     }
 
+//    applicationVariants.all { variant ->
+//        def aptOutputDir = project.file("build/generated/source/apt")
+//        def aptOutput = new File(aptOutputDir, variant.dirName)
+//
+//        sourceSets {
+//            apt {
+//                java {
+//                    srcDir aptOutput
+//                }
+//            }
+//        }
+//
+//        android.sourceSets[getSourceSetName(variant)].java.srcDirs+= aptOutput.getPath()
+//
+//        variant.javaCompile.options.compilerArgs += [
+//                '-processorpath', configurations.compile.getAsPath(),
+//                '-s', aptOutput
+//        ]
+//        variant.javaCompile.source = variant.javaCompile.source.filter { p ->
+//            return !p.getPath().startsWith(aptOutputDir.getPath())
+//        }
+//
+//        variant.javaCompile.doFirst {
+//            aptOutput.mkdirs()
+//        }
+//    }
 }
+
 
 dependencies {
 
@@ -45,10 +88,6 @@ dependencies {
 }
 
 
-sourceSets {
-    apt{
-        java{
-            srcDir 'build/generated/source/apt'
-        }
-    }
-}
+//def getSourceSetName(variant) {
+//    return new File(variant.dirName).getName();
+//}
