@@ -1,6 +1,7 @@
 package com.oridev.variantsstubsgenerator.sample;
 
-import android.util.Log;
+
+import android.content.Context;
 
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 
@@ -11,8 +12,8 @@ import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 @RequiresVariantStub(flavorFrom = "flavor1", flavorTo = "flavor2")
 public class Flavor1SpecificFunctionality {
 
-    public static String getFlavor1Message() {
-        return "this is flavor1";
+    public static String getFlavor1Message(Context context) {
+        return context.getString(R.string.message_flavor1_success);
     }
 
     private static void privateMethod(int x) {

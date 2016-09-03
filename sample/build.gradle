@@ -2,24 +2,21 @@ apply plugin: 'com.android.application'
 apply plugin: 'idea'
 apply plugin: 'android-apt'
 
-//sourceSets {
-//    apt {
-//        java {
-//            srcDir 'build/generated/source/apt'
-//        }
+
+//apt {
+//    arguments {
+//        variantName variant.name
+//        resourcePackageName android.defaultConfig.applicationId
 //    }
 //}
 
-apt {
-    arguments {
-        variantName variant.name
-        resourcePackageName android.defaultConfig.applicationId
-    }
-}
+//configurations {
+//    apt
+//}
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "24.0.0"
+    buildToolsVersion "24.0.1"
 
     defaultConfig {
         applicationId "com.oridev.variantsstubsgenerator.sample"
@@ -37,36 +34,70 @@ android {
 
     productFlavors {
 
-        flavor1 {}
+        flavor1 {
+        }
 
-        flavor2 {}
+        flavor2 {
+        }
     }
 
+    sourceSets {
+//    apt{
+//        java.srcDir "${buildDir}/generated/source/apt"
+//    }
+        apt {
+            java {
+                srcDirs "${buildDir}/generated/source/apt"
+            }
+        }
+    }
+
+//    applicationVariants.all { variant ->
+//        variant.mergeResources.doFirst {
+//            if (project.ext.has(variant.productFlavors.name)) {
+//                if (project.ext[variant.productFlavors.name].debugRes != null) {
+//                    android.sourceSets.debug.res.srcDirs = project.ext[variant.productFlavors.name].debugRes
+//                } else {
+//                    android.sourceSets.debug.res.srcDirs = ['src/debug/res']
+//                }
+//
+//                if (project.ext[variant.productFlavors.name].releaseRes != null) {
+//                    android.sourceSets.release.res.srcDirs = project.ext[variant.productFlavors.name].releaseRes
+//                } else {
+//                    android.sourceSets.release.res.srcDirs = ['src/release/res']
+//                }
+//            } else {
+//                android.sourceSets.debug.res.srcDirs = ['src/debug/res']
+//                android.sourceSets.release.res.srcDirs = ['src/release/res']
+//            }
+//        }
+//    }
+    /* */
 //    applicationVariants.all { variant ->
 //        def aptOutputDir = project.file("build/generated/source/apt")
 //        def aptOutput = new File(aptOutputDir, variant.dirName)
 //
-//        sourceSets {
-//            apt {
-//                java {
-//                    srcDir aptOutput
-//                }
-//            }
-//        }
+////        sourceSets {
+////            apt {
+////                java {
+////                    srcDir aptOutput
+////                }
+////            }
+////        }
 //
-//        android.sourceSets[getSourceSetName(variant)].java.srcDirs+= aptOutput.getPath()
+////        variant.sourceSets.java.srcDirs += aptOutput.getPath()
 //
-//        variant.javaCompile.options.compilerArgs += [
-//                '-processorpath', configurations.compile.getAsPath(),
-//                '-s', aptOutput
-//        ]
-//        variant.javaCompile.source = variant.javaCompile.source.filter { p ->
-//            return !p.getPath().startsWith(aptOutputDir.getPath())
-//        }
-//
-//        variant.javaCompile.doFirst {
-//            aptOutput.mkdirs()
-//        }
+////        variant.javaCompile.options.compilerArgs += [
+////                '-processorpath', configurations.compile.getAsPath(),
+////                '-s', aptOutput
+////        ]
+////        variant.javaCompile.source = variant.javaCompile.source.filter { p ->
+////            return !p.getPath().startsWith(aptOutputDir.getPath())
+////        }
+////
+////        variant.javaCompile.doFirst {
+////            aptOutput.mkdirs()
+////        }
 //    }
 }
 

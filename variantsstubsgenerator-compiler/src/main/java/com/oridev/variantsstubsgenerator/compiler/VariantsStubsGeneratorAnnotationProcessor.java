@@ -6,23 +6,32 @@ import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 import com.oridev.variantsstubsgenerator.exception.AttemptToUseStubException;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import com.squareup.moshi.Types;
 
-import java.io.Closeable;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -36,10 +45,10 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
@@ -51,7 +60,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     private ProcessingEnvironment environment;
     private Elements elementUtils;
-    private Types typesUtils;
+    //private Types typesUtils;
     private Filer filer;
 
     private boolean mFirstRound = true;
@@ -61,7 +70,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         super.init(env);
         environment = env;
         elementUtils = env.getElementUtils();
-        typesUtils = env.getTypeUtils();
+        //typesUtils = env.getTypeUtils();
         filer = env.getFiler();
     }
 
@@ -86,26 +95,13 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     }
 
 
-//    /**
-//     * For debugging!! yeah!!
-//     */
-//    public static void main(String[] args) {
-//        try {
-//            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-//            JavaFileManager manager = compiler.getStandardFileManager(null, null, null);
-//                //new DiagnosticCollector<JavaFileObject>(), Locale.getDefault(), Charset.defaultCharset());
-//            //Path source = Files.get createTempDirectory("stackoverflow").resolve("Test.java");
-//
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-        // collect all the annotated classes
+        Map<String, GeneratedFilesEntries> generatedFilesByFlavors = new HashMap<>();
+        String flavorFromAux = null;
+
+        // generate stubs for annotated classes
         Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(RequiresVariantStub.class);
         for (Element element : elements) {
 
@@ -118,29 +114,48 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
             final String flavorFrom = annotation.flavorFrom();
             final String flavorTo = annotation.flavorTo();
+            flavorFromAux = flavorFrom;
 
             try {
-
                 if (!doesClassExist(file, flavorFrom, flavorTo)) {
+                    writeSourceFile(file, flavorFrom, flavorTo);
 
-                    String path = writeSourceFile(file, flavorFrom, flavorTo);
                     logMessage(Diagnostic.Kind.NOTE, "Processing done.");
 
-                    //addSourceFilesToFiler(path);
-                }
+                    // add generated file to map
+                    if (generatedFilesByFlavors.get(flavorTo) == null) {
+                        generatedFilesByFlavors.put(flavorTo, new GeneratedFilesEntries(flavorFrom, new FileEntry(file.typeSpec.name, file.packageName)));
+                    } else {
+                        generatedFilesByFlavors.get(flavorTo).addEntry(new FileEntry(file.typeSpec.name, file.packageName));
+                    }
 
+                }
             } catch (Throwable e) {
                 logMessage(Diagnostic.Kind.NOTE, "Processing failed: " + e);
             }
         }
 
+        // write generated files to their target flavors
+        if (!generatedFilesByFlavors.isEmpty()) {
+            writeGeneratedFilesToJson(generatedFilesByFlavors);
+        }
+
+        // add generated files to this flavor
+
+        if (flavorFromAux != null) {
+            addGeneratedFilesToFiler(flavorFromAux);
+        }
+
         if (mFirstRound) {
             //addSourceFilesToFiler();
-            mFirstRound = false;
+            //mFirstRound = false;
         }
 
         return true;
     }
+
+
+    // Stubs Generation ----------------
 
     private JavaFile generateStubJavaFile(TypeElement element) {
         logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + element.getSimpleName());
@@ -169,6 +184,14 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.getSimpleName().toString())
                                 .addModifiers(method.getModifiers())
                                 .returns(TypeName.get(methodReturnType));
+
+                        // add parameters
+                        for (VariableElement methodParam : method.getParameters()) {
+                            TypeName methodParamType = TypeName.get(methodParam.asType());
+                            String methodParamName = methodParam.getSimpleName().toString();
+                            ParameterSpec.Builder paramBuilder = ParameterSpec.builder(methodParamType, methodParamName);
+                            methodBuilder.addParameter(paramBuilder.build());
+                        }
 
                         if (throwException) {
                             // add throw statement
@@ -202,13 +225,14 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     }
 
     private boolean doesClassExist(JavaFile file, String flavorFrom, String flavorTo) {
-        try {
-            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, file.packageName, file.typeSpec.name);
-            return fileObj != null;
-        } catch (IOException e) {
-            logMessage(Diagnostic.Kind.WARNING, "doesClassExist failure: " + e);
-        }
+//        try {
+//            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, file.packageName, file.typeSpec.name);
+//            //return fileObj != null;
+//        } catch (IOException e) {
+//            logMessage(Diagnostic.Kind.WARNING, "doesClassExist failure: " + e);
+//        }
         return false;
+        // todo: implement!
     }
 
     private String writeSourceFile(JavaFile javaFile, String flavorFrom, String flavorTo) throws IOException {
@@ -227,8 +251,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             logMessage(Diagnostic.Kind.WARNING, "Failed to write draft file: " + e);
             try {
                 filerSourceFile.delete();
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) { }
             throw e;
         }
 
@@ -252,9 +275,8 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             fileWriter = new FileWriter(targetFile);
             javaFile.writeTo(fileWriter);
             //Files.copy(generatedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING /*, StandardCopyOption.ATOMIC_MOVE */);
-            logMessage(Diagnostic.Kind.NOTE, "Move successful");
         } catch (Exception e) {
-            logMessage(Diagnostic.Kind.WARNING, "Error moving file: " + e);
+            logMessage(Diagnostic.Kind.WARNING, "Error copying file: " + e);
         } finally {
             if (fileWriter != null) {
                 try { fileWriter.close(); }
@@ -297,40 +319,167 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     }
 
-    private void addSourceFilesToFiler(final String file) {
 
-        JavaFileObject fileObj = null;
+    private void writeGeneratedFilesToJson(Map<String, GeneratedFilesEntries> generatedFiles) {
+
+        if (generatedFiles == null || generatedFiles.size() == 0) {
+            return;
+        }
+
+        // get all entries json
+        for (String flavor : generatedFiles.keySet()) {
+
+            GeneratedFilesEntries entries = generatedFiles.get(flavor);
+
+            String flavorFrom = entries.mFlavorFrom;
+
+            // write generated files details to json
+            String totalJson = getJsonAdapter().toJson(entries.mEntries);
+
+            // write the json to the right flavor
+            try {
+
+                // add file to filer
+                FileObject fileObj = filer.createResource(StandardLocation.SOURCE_OUTPUT, JSON_PACKAGE, getJsonFileName(flavor));
+
+                logMessage(Diagnostic.Kind.NOTE, "Writing info json to file..");
+
+                // write json to file
+                Writer writer = fileObj.openWriter();
+                writer.write(totalJson);
+                writer.flush();
+                writer.close();
+
+                String originalPathStr = fileObj.getName();
+                String targetPathStr = originalPathStr.replace(flavorFrom, flavor);
+                Path targetPath = Paths.get(targetPathStr);
+
+                logMessage(Diagnostic.Kind.NOTE, "Moving info file to the right flavor");
+
+                Files.createDirectories(targetPath);
+                Files.move(Paths.get(originalPathStr), targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+            } catch (IOException e) {
+                logMessage(Diagnostic.Kind.WARNING, "Failed to create info file: " + e);
+            }
+        }
+    }
+
+    private void addGeneratedFilesToFiler(String flavorFrom) {
+
         try {
+            // read json content
+            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, JSON_PACKAGE, getJsonFileName(flavorFrom));
 
-//            fileObj = filer.getResource(new JavaFileManager.Location() {
-//                @Override
-//                public String getName() {
-//                    return file.substring(0, );
-//                }
-//
-//                @Override
-//                public boolean isOutputLocation() {
-//                    return false;
-//                }
-//            }, )
+            Reader reader = fileObj.openReader(false);
+            BufferedReader bufferedReader = new BufferedReader(reader);
 
-            /* */
+            StringBuilder builder = new StringBuilder();
+            String aux = "";
 
-            String fileName = "com.oridev.variantsstubsgenerator.sample.Flavor2SpecificFunctionality";
-            fileObj = filer.createSourceFile(fileName);
-            logMessage(Diagnostic.Kind.NOTE, "Added file to filer " + fileObj.getName());
+            while ((aux = bufferedReader.readLine()) != null) {
+                builder.append(aux);
+            }
+            bufferedReader.close();
+            reader.close();
+
+            String fileContent = builder.toString();
+            List<FileEntry> entries = getJsonAdapter().fromJson(fileContent);
+
+            if (entries != null) {
+                for (FileEntry entry : entries) {
+                    logMessage(Diagnostic.Kind.NOTE, "Adding generated entry " + entry.mName + " to filer");
+                    addSourceFilesToFiler(entry.mName, entry.mPackage);
+                }
+            }
+
+//            final String fileName = "Flavor2SpecificFunctionality";
+//            final String filePackage = "com.oridev.variantsstubsgenerator.sample";
+//            addSourceFilesToFiler(fileName, filePackage);
+
+        } catch (FileNotFoundException e) {
+            logMessage(Diagnostic.Kind.NOTE, "info file not found: " + e);
+        } catch (Exception e) {
+            logMessage(Diagnostic.Kind.WARNING, "Failed to read info file: " + e);
+        }
+
+    }
+
+
+
+    // Adding Generated Files To Filer -------------------------
+
+    private static final String JSON_PACKAGE = "variantsstubsgenerator.generated.info";
+    private String getJsonFileName(String flavor) {
+        String JSON_FILES_NAME = "variant_stubs_files";
+        //return JSON_FILES_NAME + ".json";
+        return JSON_FILES_NAME + "_" + flavor + ".json";
+    }
+
+
+    /* Json Handling */
+
+    private JsonAdapter<List<FileEntry>> mJsonAdapter = null;
+    private JsonAdapter<List<FileEntry>> getJsonAdapter() {
+        if (mJsonAdapter == null) {
+            Moshi moshi = new Moshi.Builder().build();
+            mJsonAdapter = moshi.adapter((Types.newParameterizedType(List.class, FileEntry.class)));
+        }
+        return mJsonAdapter;
+    }
+
+    static private class FileEntry {
+        public final String mName;
+        public final String  mPackage;
+
+        public FileEntry(String name, String _package) {
+            mName = name;
+            mPackage = _package;
+        }
+    }
+
+    static private class GeneratedFilesEntries {
+        public final List<FileEntry> mEntries;
+        public final String mFlavorFrom;
+        public GeneratedFilesEntries(String flavorFrom, FileEntry entry) {
+            mFlavorFrom = flavorFrom;
+            mEntries = new ArrayList<>();
+            mEntries.add(entry);
+        }
+
+        public void addEntry(FileEntry entry) {
+            mEntries.add(entry);
+        }
+    }
+
+
+    /* Utilities --------------------------------------- */
+
+    private void addSourceFilesToFiler(String fileName, String filePackage) {
+
+        try {
+            // add java file with the right name and package to filer
+            String fileQualifiedName = filePackage + "." + fileName;
+            JavaFileObject filerSourceFile = filer.createSourceFile(fileQualifiedName);
+
+            // get file current content
+            Path targetPath = Paths.get(filerSourceFile.toUri());
+            String fileContent = new String(Files.readAllBytes(targetPath));
+
+            // rewrite file content
+            Writer writer = filerSourceFile.openWriter();
+            writer.write(fileContent);
+            writer.flush();
+            writer.close();
+
+            logMessage(Diagnostic.Kind.NOTE, "Added file to filer " + filerSourceFile.getName());
 
             //executeTestMethod();
 
         } catch (Exception e) {
             logMessage(Diagnostic.Kind.WARNING, "Failed to add file to filer: " + e);
-        } finally {
-            if (fileObj != null) {
-                //filer.
-            }
         }
     }
-
 
     private Object getDefaultReturnTypeForTypeMirror(TypeMirror type) {
         TypeName typeName = TypeName.get(type);
@@ -361,21 +510,24 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         }
     }
 
-//    private void executeTestMethod() {
+
+    /* Reflection */
+//    private static final String M_DISPLAY_STATE = "displayState";
+//    private static final String M_NEW_ROUND = "newRound";
+
+//    private void executeFilerMethod(String methodName) {
 //
 //        Class<? extends Filer> type = filer.getClass();
-//        String methodName = "newRound";
 //
 //        Exception error = null;
 //        Method method = null;
 //        try {
-//            method = type.getMethod(methodName, com.sun.tools.javac.util.Context.class);
+//            method = type.getMethod(methodName);
 //
 //            try {
-//                method.invoke(type, new com.sun.tools.javac.util.Context());
+//                method.invoke(type);
 //            } catch (SecurityException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 //                error = e;
-//
 //            }
 //
 //        } catch (NoSuchMethodException e) {
@@ -386,7 +538,6 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 //            logMessage(Diagnostic.Kind.WARNING, "Invoking method failed: " + error);
 //        }
 //    }
-
 
     /* V2 - use of android apt example, working! :) */
 //    @Override

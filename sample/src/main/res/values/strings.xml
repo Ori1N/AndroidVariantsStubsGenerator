@@ -4,4 +4,9 @@
 
     <string name="button_text">Click me</string>
 
+    <string name="message_flavor1_success">Flavor1 says hello!</string>
+    <string name="message_flavor1_failure">Got null, probably should not have called flavor1 method from flavor2...</string>
+
+    <string name="message_flavor2_success">this is flavor2 real method</string>
+
 </resources>

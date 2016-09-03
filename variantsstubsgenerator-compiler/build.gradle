@@ -11,8 +11,11 @@ dependencies {
     // utilities for annotation processing
     compile 'com.google.auto.service:auto-service:1.0-rc2'
 
-    // utilities for code genration
+    // utilities for code generation
     compile 'com.squareup:javapoet:1.7.0'
     compile 'com.google.auto:auto-common:0.4'
+
+    // json handling
+    compile 'com.squareup.moshi:moshi:1.2.0'
 
 }
