@@ -1,22 +1,39 @@
-# VariantsStubsGenerator - for android builds with multiple flavors
+# VariantsStubsGenerator
 ============
 
-Field and method binding for Android views which uses annotation processing to generate boilerplate
-code for you.
+Library for android projects using gradle with multiple flavors on AndroidStudio (not eclipse).
+
+Annotate flavor-specific-classes on multi-flavored android projects to 
+create build-generated stub classes.
 
 Avoid the 'pleasure' of creating and updating stub classes for flavor-specific-functionality.
-Annotate flavor-specific-classes to generate stubs on build (no reflection).
+Annotate flavor-specific-classes to generate stubs classes containing all the public methods
+of the annotated class.
+The stubs are generated when building the variant containing the annotation
+(no reflection)
 
 For example, for annotated class FlavorSpecificFunctionality
 ```java
-@RequiresVariantStub(flavorFrom = "flavor2", flavorTo = "flavor1")
-class FlavorSpecificFunctionality {
+@RequiresVariantStub(flavorFrom = "flavorExtraFunctionality", flavorTo = "flavorRegular")
+class ExtraFunctionality {
   
-  public void someFlavorSpecificMethod(int x, int y) {
+  public void someFunctionality(int x, int y) {
     ...
   }
-
 ```
+
+will generate the following stub file under build/generated/source/apt/flavorRegular/{package}/ExtraFunctionality.java
+```java
+class ExtraFunctionality {
+
+  public void someFunctionality(int x, int y) {
+  }
+```
+
+So you can call `ExtraFunctionality.someFunctionality(testX, testY)` 
+from the main source set and the application will compile also on `flavorRegular`
+
+* Android Studio recognizes the generated files and doesn't raise errors.
 
 Download
 --------
