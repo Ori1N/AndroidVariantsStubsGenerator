@@ -20,8 +20,8 @@ public class Flavor1SpecificFunctionality {
 
     }
 
-    public static void publicMethod(int x) {
-
+    public static int publicMethod(int x, float y) {
+        return x  + (int) y;
     }
 
 }

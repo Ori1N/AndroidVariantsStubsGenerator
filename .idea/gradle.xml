@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/sample" />
             <option value="$PROJECT_DIR$/variantsstubsgenerator-annotation" />
             <option value="$PROJECT_DIR$/variantsstubsgenerator-compiler" />
+            <option value="$PROJECT_DIR$/variantsstubsgenerator-gradle-plugin" />
           </set>
         </option>
         <option name="myModules">
@@ -20,6 +21,7 @@
             <option value="$PROJECT_DIR$/sample" />
             <option value="$PROJECT_DIR$/variantsstubsgenerator-annotation" />
             <option value="$PROJECT_DIR$/variantsstubsgenerator-compiler" />
+            <option value="$PROJECT_DIR$/variantsstubsgenerator-gradle-plugin" />
           </set>
         </option>
       </GradleProjectSettings>

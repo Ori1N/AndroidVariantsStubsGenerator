@@ -28,10 +28,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showMessages() {
-        String message1 = "", message2 = "";
 
         // get some text from flavor1
-        message1 = Flavor1SpecificFunctionality.getFlavor1Message(this);
+        String message1 = Flavor1SpecificFunctionality.getFlavor1Message(this);
         /* It's ok if the IDE complains about this condition always being false (if your're
            on flavor1) or always true (if your'e on flavor2) */
         if (message1 == null) {
@@ -40,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* this won't compile on flavor1 because we didn't use the annotation... */
-        //message2 = Flavor2SpecificFunctionality.getFlavor2Message(this);
+        //String message2 = Flavor2SpecificFunctionality.getFlavor2Message(this);
 
         /* uncomment for using the annotation in flavor2 */
         // get some text from flavor2

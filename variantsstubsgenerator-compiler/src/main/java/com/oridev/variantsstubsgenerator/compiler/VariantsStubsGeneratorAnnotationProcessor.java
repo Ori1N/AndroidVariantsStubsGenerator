@@ -58,12 +58,13 @@ import javax.tools.StandardLocation;
 @AutoService(Processor.class)
 public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor {
 
+
     private ProcessingEnvironment environment;
     private Elements elementUtils;
     //private Types typesUtils;
     private Filer filer;
 
-    private boolean mFirstRound = true;
+    //private boolean mFirstRound = true;
 
     @Override
     public synchronized void init(ProcessingEnvironment env) {
@@ -81,11 +82,11 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return types;
     }
 
+    private static final String OPTION_VARIANT = "variantName";
     @Override
     public Set<String> getSupportedOptions() {
         Set<String> options = new LinkedHashSet<>();
-        options.add("variantName");
-        options.add("resourcePackageName");
+        options.add(OPTION_VARIANT);
         return options;
     }
 
@@ -99,7 +100,8 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
         Map<String, GeneratedFilesEntries> generatedFilesByFlavors = new HashMap<>();
-        String flavorFromAux = null;
+        // fixme: temp solution! won't work for multiple flavored builds...
+        String auxFlavorFrom = null;
 
         // generate stubs for annotated classes
         Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(RequiresVariantStub.class);
@@ -114,7 +116,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
             final String flavorFrom = annotation.flavorFrom();
             final String flavorTo = annotation.flavorTo();
-            flavorFromAux = flavorFrom;
+            auxFlavorFrom = flavorFrom;
 
             try {
                 if (!doesClassExist(file, flavorFrom, flavorTo)) {
@@ -141,15 +143,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         }
 
         // add generated files to this flavor
-
-        if (flavorFromAux != null) {
-            addGeneratedFilesToFiler(flavorFromAux);
-        }
-
-        if (mFirstRound) {
-            //addSourceFilesToFiler();
-            //mFirstRound = false;
-        }
+        addGeneratedFilesToFiler(auxFlavorFrom);
 
         return true;
     }
@@ -365,11 +359,18 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         }
     }
 
-    private void addGeneratedFilesToFiler(String flavorFrom) {
+    private void addGeneratedFilesToFiler(String currentFlavor) {
+
+//        String currentFlavor = processingEnv.getOptions().get(OPTION_VARIANT);
+
+        if (currentFlavor == null) {
+            return;
+        }
 
         try {
             // read json content
-            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, JSON_PACKAGE, getJsonFileName(flavorFrom));
+            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, JSON_PACKAGE, getJsonFileName(currentFlavor));
+            logMessage(Diagnostic.Kind.NOTE, "info file got from filer: " + fileObj.getName());
 
             Reader reader = fileObj.openReader(false);
             BufferedReader bufferedReader = new BufferedReader(reader);
@@ -409,9 +410,9 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     // Adding Generated Files To Filer -------------------------
 
-    private static final String JSON_PACKAGE = "variantsstubsgenerator.generated.info";
+    private static final String JSON_PACKAGE = "variantsstubsgenerator.meta";
     private String getJsonFileName(String flavor) {
-        String JSON_FILES_NAME = "variant_stubs_files";
+        String JSON_FILES_NAME = "variant_generated_files";
         //return JSON_FILES_NAME + ".json";
         return JSON_FILES_NAME + "_" + flavor + ".json";
     }

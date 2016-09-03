@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/sample/sample.iml" filepath="$PROJECT_DIR$/sample/sample.iml" />
       <module fileurl="file://$PROJECT_DIR$/variantsstubsgenerator-annotation/variantsstubsgenerator-annotation.iml" filepath="$PROJECT_DIR$/variantsstubsgenerator-annotation/variantsstubsgenerator-annotation.iml" />
       <module fileurl="file://$PROJECT_DIR$/variantsstubsgenerator-compiler/variantsstubsgenerator-compiler.iml" filepath="$PROJECT_DIR$/variantsstubsgenerator-compiler/variantsstubsgenerator-compiler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/variantsstubsgenerator-gradle-plugin/variantsstubsgenerator-gradle-plugin.iml" filepath="$PROJECT_DIR$/variantsstubsgenerator-gradle-plugin/variantsstubsgenerator-gradle-plugin.iml" />
     </modules>
   </component>
 </project>
