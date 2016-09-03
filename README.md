@@ -21,7 +21,7 @@ class ExtraFunctionality {
   }
 ```
 
-will generate the following stub file under build/generated/source/apt/flavorRegular/{package}/ExtraFunctionality.java
+will generate the following stub file under `build/generated/source/apt/flavorRegular/{package}/ExtraFunctionality.java`
 ```java
 class ExtraFunctionality {
 
@@ -62,7 +62,5 @@ android {
 
 dependencies {
   ...
-  compile 'com.jakewharton:butterknife:8.4.0'
-  apt 'com.jakewharton:butterknife-compiler:8.4.0'
 }
 ```
