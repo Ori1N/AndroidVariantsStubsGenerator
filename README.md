@@ -7,9 +7,8 @@ Annotate flavor-specific-classes on multi-flavored android projects to
 create build-generated stub classes.
 
 Avoid the 'pleasure' of creating and updating stub classes for flavor-specific-functionality.
-Annotate flavor-specific-classes to generate stubs classes containing all the public methods
-of the annotated class.
-The stubs are generated when building the variant containing the annotation
+Annotate flavor-specific-classes and stubs classes containing all the public methods
+of the annotated class will be generated on build.
 (no reflection)
 
 For example, for annotated class FlavorSpecificFunctionality
@@ -62,6 +61,7 @@ android {
 }
 
 dependencies {
+  ...
   compile 'com.jakewharton:butterknife:8.4.0'
   apt 'com.jakewharton:butterknife-compiler:8.4.0'
 }
