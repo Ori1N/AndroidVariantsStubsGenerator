@@ -1,3 +1,5 @@
+## Still in development
+
 # VariantsStubsGenerator
 ============
 
@@ -7,9 +9,9 @@ Annotate flavor-specific-classes on multi-flavored android projects to
 create build-generated stub classes.
 
 Avoid the 'pleasure' of creating and updating stub classes for flavor-specific-functionality.
-Annotate flavor-specific-classes and stubs classes containing all the public methods
-of the annotated class will be generated on build.
-(no reflection)
+For each annotated class a java stub file will be generated on build (no reflection), containing 
+all the public methods of the annotated class.
+This file will be generated to the flavor specified in the annotation (parameter `flavorTo`).
 
 For example, for annotated class FlavorSpecificFunctionality
 ```java
@@ -50,7 +52,7 @@ buildscript {
 }
 ```
 
-Then, apply the 'android-apt' plugin in your module-level `build.gradle` and add the Butter Knife
+Then, apply the 'android-apt' plugin in your module-level `build.gradle` and add the library
 dependencies:
 
 ```groovy
@@ -61,6 +63,6 @@ android {
 }
 
 dependencies {
-  ...
+  // still not uploaded to bintray...
 }
 ```

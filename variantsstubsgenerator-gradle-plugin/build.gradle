@@ -1,5 +1,7 @@
-apply plugin: 'groovy'
+apply plugin: 'java'
+//apply plugin: 'groovy'
 
 dependencies {
-    compile gradleApi();
+    compile project(':variantsstubsgenerator-compiler')
+    //compile gradleApi();
 }

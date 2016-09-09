@@ -1,6 +1,52 @@
+import groovy.json.JsonSlurper
+//import com.oridev.variantsstubsgenerator.plugin.AddFileEntriesToFilerTask
+
+//buildscript {
+//    dependencies {
+//        classpath project(':variantsstubsgenerator-gradle-plugin')
+//    }
+//}
+
+
 apply plugin: 'com.android.application'
-apply plugin: 'idea'
+//apply plugin: 'idea'
 apply plugin: 'android-apt'
+
+
+task generateSources { sourceSet ->
+    def outputDir = file("$buildDir/generated/source/apt/$sourceSet.name")
+    outputs.dir outputDir
+    doFirst {
+        outputDir.exists() || outputDir.mkdirs()
+        //new File(outputDir, "Generated.java").write("public class Generated {}")
+    }
+}
+//compileJava.source generateSources.outputs.files, sourceSets.main.java
+
+
+//task generateFiles << {
+
+
+    //def jsonSlurper = new JsonSlurper()
+    //def object = jsonSlurper.parse(file('$project.buildDir' + '/'))
+    //println(object)
+
+    //AddFileEntriesToFilerTask.addGeneratedFilesToFiler()
+//}
+
+preBuild.dependsOn generateSources
+
+//task createDevGwtXmlA(type: Copy) {
+//
+//    from('src/main/java/com/saic/champion/upload/')
+//
+//    into('src/main/java/com/saic/champion/upload/')
+//
+//    include('DevUpload.xml')
+//
+//    rename ('DevUpload.xml', 'DevUpload.gwt.xml')
+//
+//}
 
 
 apt {
