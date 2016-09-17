@@ -2,9 +2,7 @@ import groovy.json.JsonSlurper
 //import com.oridev.variantsstubsgenerator.plugin.AddFileEntriesToFilerTask
 
 //buildscript {
-//    dependencies {
-//        classpath project(':variantsstubsgenerator-gradle-plugin')
-//    }
+//    classpath +=
 //}
 
 
@@ -13,47 +11,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'android-apt'
 
 
-task generateSources { sourceSet ->
-    def outputDir = file("$buildDir/generated/source/apt/$sourceSet.name")
-    outputs.dir outputDir
-    doFirst {
-        outputDir.exists() || outputDir.mkdirs()
-        //new File(outputDir, "Generated.java").write("public class Generated {}")
-    }
-}
-//compileJava.source generateSources.outputs.files, sourceSets.main.java
-
-
-//task generateFiles << {
-
-
-    //def jsonSlurper = new JsonSlurper()
-    //def object = jsonSlurper.parse(file('$project.buildDir' + '/'))
-    //println(object)
-
-    //AddFileEntriesToFilerTask.addGeneratedFilesToFiler()
+//apt {
+//    arguments {
+//        variantName variant.name
+//    }
 //}
-
-preBuild.dependsOn generateSources
-
-//task createDevGwtXmlA(type: Copy) {
-//
-//    from('src/main/java/com/saic/champion/upload/')
-//
-//    into('src/main/java/com/saic/champion/upload/')
-//
-//    include('DevUpload.xml')
-//
-//    rename ('DevUpload.xml', 'DevUpload.gwt.xml')
-//
-//}
-
-
-apt {
-    arguments {
-        variantName variant.name
-    }
-}
 
 android {
     compileSdkVersion 24
@@ -81,66 +43,8 @@ android {
         flavor2 {
         }
     }
-
-    sourceSets {
-//    apt{
-//        java.srcDir "${buildDir}/generated/source/apt"
-//    }
-        apt {
-            java {
-                srcDirs "${buildDir}/generated/source/apt"
-            }
-        }
-    }
-
-//    applicationVariants.all { variant ->
-//        variant.mergeResources.doFirst {
-//            if (project.ext.has(variant.productFlavors.name)) {
-//                if (project.ext[variant.productFlavors.name].debugRes != null) {
-//                    android.sourceSets.debug.res.srcDirs = project.ext[variant.productFlavors.name].debugRes
-//                } else {
-//                    android.sourceSets.debug.res.srcDirs = ['src/debug/res']
-//                }
-//
-//                if (project.ext[variant.productFlavors.name].releaseRes != null) {
-//                    android.sourceSets.release.res.srcDirs = project.ext[variant.productFlavors.name].releaseRes
-//                } else {
-//                    android.sourceSets.release.res.srcDirs = ['src/release/res']
-//                }
-//            } else {
-//                android.sourceSets.debug.res.srcDirs = ['src/debug/res']
-//                android.sourceSets.release.res.srcDirs = ['src/release/res']
-//            }
-//        }
-//    }
-    /* */
-//    applicationVariants.all { variant ->
-//        def aptOutputDir = project.file("build/generated/source/apt")
-//        def aptOutput = new File(aptOutputDir, variant.dirName)
-//
-////        sourceSets {
-////            apt {
-////                java {
-////                    srcDir aptOutput
-////                }
-////            }
-////        }
-//
-////        variant.sourceSets.java.srcDirs += aptOutput.getPath()
-//
-////        variant.javaCompile.options.compilerArgs += [
-////                '-processorpath', configurations.compile.getAsPath(),
-////                '-s', aptOutput
-////        ]
-////        variant.javaCompile.source = variant.javaCompile.source.filter { p ->
-////            return !p.getPath().startsWith(aptOutputDir.getPath())
-////        }
-////
-////        variant.javaCompile.doFirst {
-////            aptOutput.mkdirs()
-////        }
-//    }
 }
+
 
 dependencies {
 
@@ -150,6 +54,7 @@ dependencies {
 
     compile project(':variantsstubsgenerator-annotation')
     apt project(':variantsstubsgenerator-compiler')
+    apt project(':variantsstubsgenerator-gradle-plugin')
 
     compile 'com.jakewharton:butterknife:8.2.1'
     apt 'com.jakewharton:butterknife-compiler:8.2.1'
@@ -158,6 +63,4 @@ dependencies {
 
 }
 
-//configurations {
-//    apt
-//}
+apply plugin: 'variantsstubsgenerator'

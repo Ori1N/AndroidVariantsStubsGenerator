@@ -147,9 +147,9 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         }
 
         // add generated files to this flavor
-        AddGeneratedFilesTask.addGeneratedFilesToFiler(filer, auxFlavorFrom);
-//
-//        logMessage(Diagnostic.Kind.NOTE, "Processing done.");
+        //AddGeneratedFilesTask.addGeneratedFilesToFiler(filer, auxFlavorFrom);
+
+        logMessage(Diagnostic.Kind.NOTE, "Processing done.");
 
         return true;
     }
@@ -289,10 +289,9 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
         // change draft file in flavorFrom's class name to temp name
         Path path = Paths.get(filerSourceFile.toUri());
-        Charset charset = StandardCharsets.UTF_8;
-        String content = new String(Files.readAllBytes(path), charset);
+        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
         content = content.replaceFirst("class " + javaFile.typeSpec.name, "class " + EXT + javaFile.typeSpec.name);
-        Files.write(path, content.getBytes(charset));
+        Files.write(path, content.getBytes(StandardCharsets.UTF_8));
 
 
         /* close filer (no compilation error but now gradle doesn't consider generated files */

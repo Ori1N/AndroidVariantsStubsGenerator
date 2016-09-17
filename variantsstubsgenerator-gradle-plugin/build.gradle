@@ -1,0 +1,7 @@
+apply plugin: 'groovy'
+
+dependencies {
+    compile gradleApi()
+    compile 'com.android.tools.build:gradle:2.1.3'
+
+}
