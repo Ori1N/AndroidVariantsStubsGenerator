@@ -1,9 +1,7 @@
-## Still in development
-
 # VariantsStubsGenerator
 ============
 
-Library for android projects using gradle with multiple flavors on AndroidStudio (not eclipse).
+Library for android projects using gradle with multiple flavors on Android Studio (not eclipse).
 
 Annotate flavor-specific-classes on multi-flavored android projects to 
 create build-generated stub classes.
@@ -21,6 +19,7 @@ class ExtraFunctionality {
   public void someFunctionality(int x, int y) {
     ...
   }
+}
 ```
 
 will generate the following stub file under `build/generated/source/apt/flavorRegular/{package}/ExtraFunctionality.java`
@@ -29,6 +28,7 @@ class ExtraFunctionality {
 
   public void someFunctionality(int x, int y) {
   }
+}
 ```
 
 So you can call `ExtraFunctionality.someFunctionality(testX, testY)` 
@@ -63,6 +63,6 @@ android {
 }
 
 dependencies {
-  // still not uploaded to bintray...
+  // still not published...
 }
 ```
