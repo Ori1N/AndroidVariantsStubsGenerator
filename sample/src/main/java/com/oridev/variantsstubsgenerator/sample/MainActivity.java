@@ -29,14 +29,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void showMessages() {
 
-//        // get some text from flavor1
-//        String message1 = Flavor1SpecificFunctionality.getFlavor1Message(this);
-//        /* It's ok if the IDE complains about this condition always being false (if your're
-//           on flavor1) or always true (if your'e on flavor2) */
-//        if (message1 == null) {
-//            // this means we called flavor1 method from flavor2
-//            message1 = getString(R.string.message_flavor1_failure);
-//        }
+        // get some text from flavor1
+        String message1 = Flavor1SpecificFunctionality.getFlavor1Message(this);
+        /* It's ok if the IDE complains about this condition always being false (if your're
+           on flavor1) or always true (if your'e on flavor2) */
+        if (message1 == null) {
+            // this means we called flavor1 method from flavor2
+            message1 = getString(R.string.message_flavor1_failure);
+        }
 
         /* this won't compile on flavor1 because we didn't use the annotation... */
         //String message2 = Flavor2SpecificFunctionality.getFlavor2Message(this);
@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 //            message2 = "Got exception... good thing it's not on production yet...";
 //        }
 
-        //message1View.setText(message1);
+        message1View.setText(message1);
     }
 
 }

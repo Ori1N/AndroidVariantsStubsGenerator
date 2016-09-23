@@ -63,4 +63,5 @@ dependencies {
 
 }
 
-//apply plugin: 'variantsstubsgenerator'
+// comment on first build for project sync success
+apply plugin: 'variantsstubsgenerator'
