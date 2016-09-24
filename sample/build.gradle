@@ -50,7 +50,7 @@ dependencies {
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
-    compile 'com.android.support:appcompat-v7:24.2.0'
+    compile 'com.android.support:appcompat-v7:24.2.1'
 
     compile project(':variantsstubsgenerator-annotation')
     apt project(':variantsstubsgenerator-compiler')
@@ -64,4 +64,4 @@ dependencies {
 }
 
 // comment on first build for project sync success
-apply plugin: 'variantsstubsgenerator'
+//apply plugin: 'variantsstubsgenerator'
