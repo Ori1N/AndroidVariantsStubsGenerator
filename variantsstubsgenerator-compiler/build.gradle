@@ -20,10 +20,6 @@ dependencies {
     // json handling
     compile 'com.squareup.moshi:moshi:1.2.0'
 
-    // groovy
-    compile 'org.codehaus.groovy:groovy:2.4.4'
-    compile 'com.sun.codemodel:codemodel:2.6'
-
 }
 
 //compileJavaWithJavac() {
