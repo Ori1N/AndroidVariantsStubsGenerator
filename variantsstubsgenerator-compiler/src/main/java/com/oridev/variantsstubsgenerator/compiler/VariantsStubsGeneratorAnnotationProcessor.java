@@ -52,6 +52,7 @@ import javax.tools.StandardLocation;
 @AutoService(Processor.class)
 public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor {
 
+    private static final boolean DEBUG = false;
 
     private static ProcessingEnvironment environment;
     private Elements elementUtils;
@@ -353,14 +354,16 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     public static void logMessage(Diagnostic.Kind kind, String message) {
 
-        try {
-            if (message != null) {
-                environment.getMessager().printMessage(kind, message);
-            } else {
-                environment.getMessager().printMessage(kind, "null");
+        if (DEBUG) {
+            try {
+                if (message != null) {
+                    environment.getMessager().printMessage(kind, message);
+                } else {
+                    environment.getMessager().printMessage(kind, "null");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
