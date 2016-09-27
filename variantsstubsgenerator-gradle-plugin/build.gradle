@@ -5,3 +5,5 @@ dependencies {
     compile 'com.android.tools.build:gradle:2.2.0'
 
 }
+
+apply from: '../generate-sources.gradle'

@@ -22,6 +22,8 @@ dependencies {
 
 }
 
+apply from: '../generate-sources.gradle'
+
 //compileJavaWithJavac() {
 //    doFirst {
 //        main = mainClass
