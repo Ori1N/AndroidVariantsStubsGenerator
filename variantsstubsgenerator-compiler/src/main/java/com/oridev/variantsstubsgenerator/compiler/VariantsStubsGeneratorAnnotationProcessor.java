@@ -52,7 +52,7 @@ import javax.tools.StandardLocation;
 @AutoService(Processor.class)
 public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static ProcessingEnvironment environment;
     private Elements elementUtils;
@@ -147,10 +147,8 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             writeFileEntriesJson(generatedFilesByFlavors);
         }
 
-        // add generated files to this flavor
-        //AddGeneratedFilesTask.addGeneratedFilesToFiler(filer, auxFlavorFrom);
 
-        logMessage(Diagnostic.Kind.NOTE, "Processing done.");
+        //logMessage(Diagnostic.Kind.NOTE, "Processing done.");
 
         return true;
     }
