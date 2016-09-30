@@ -1,1 +1,1 @@
-include ':sample', ':variantsstubsgenerator-compiler', ':variantsstubsgenerator-annotation', ':variantsstubsgenerator-gradle-plugin'
+include ':sample', ':variantsstubsgenerator-compiler', ':variantsstubsgenerator-annotation', ':variantsstubsgenerator-plugin'

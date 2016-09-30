@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.oridev.variantsstubsgenerator</groupId>
-    <artifactId>annotation</artifactId>
+    <artifactId>variantsstubsgenerator-annotation</artifactId>
     <version>1.0-beta1.6</version>
 
     <dependencies>
