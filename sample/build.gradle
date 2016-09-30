@@ -52,9 +52,9 @@ dependencies {
 
     compile 'com.android.support:appcompat-v7:24.2.1'
 
-    compile project(':variantsstubsgenerator-annotation')
-    apt project(':variantsstubsgenerator-compiler')
-    apt project(':variantsstubsgenerator-gradle-plugin')
+    compile 'com.oridev.variantsstubsgenerator:annotation:1.0-beta1.6'
+    compile 'com.oridev.variantsstubsgenerator:plugin:1.0-beta1.6'
+    apt 'com.oridev.variantsstubsgenerator:compiler:1.0-beta1.6'
 
     compile 'com.jakewharton:butterknife:8.2.1'
     apt 'com.jakewharton:butterknife-compiler:8.2.1'

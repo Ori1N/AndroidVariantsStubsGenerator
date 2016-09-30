@@ -5,7 +5,7 @@
 
     <groupId>com.oridev.variantsstubsgenerator</groupId>
     <artifactId>compiler</artifactId>
-    <version>1.0-beta1.4</version>
+    <version>1.0-beta1.6</version>
 
     <dependencies>
         <dependency>
