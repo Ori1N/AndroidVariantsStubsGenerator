@@ -12,7 +12,7 @@ all the public methods of the annotated class.
 This file will be generated to the flavor specified in the annotation (parameter `flavorTo`).
 
 For example, in case you have `free` and `paid` flavors in your app and you want to add some extra 
-functionality for the paid version, then you can add the extra functionality to `paid/com.example.FlavorSpecificFunctionality`
+functionality for the paid version, then you can add the extra functionality to `app/src/paid/com.example.FlavorSpecificFunctionality`
 and use the annotation as follows:
 ```java
 @RequiresVariantStub(flavorFrom = "paid", flavorTo = "free")
@@ -24,7 +24,7 @@ class ExtraFunctionality {
 }
 ```
 
-will generate the following stub file under `build/generated/source/apt/free/com.example.ExtraFunctionality.java`
+And a stub class will be generated in `app/build/generated/source/apt/free/com.example.ExtraFunctionality.java`
 ```java
 class ExtraFunctionality {
 
