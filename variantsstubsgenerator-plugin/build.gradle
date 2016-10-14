@@ -9,4 +9,4 @@ dependencies {
 
 }
 
-apply from: '../generate-sources.gradle'
+apply from: '../artifacts.gradle'

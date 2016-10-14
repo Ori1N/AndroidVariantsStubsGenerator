@@ -258,7 +258,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         File generatedFile = new File(filerSourceFile.toUri());
         String targetPathStr = generatedFile.getPath()
                 // set path to flavorTo
-                .replace(flavorFrom, flavorTo)
+                .replace("generated/source/apt/" + flavorFrom, "generated/source/apt/" + flavorTo)
                 // remove extension from file name
                 .replace("/" + EXT + javaFile.typeSpec.name, "/" + javaFile.typeSpec.name);
         File targetFile = new File(targetPathStr);

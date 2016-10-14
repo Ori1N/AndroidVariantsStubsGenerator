@@ -64,49 +64,49 @@ public class FileEntriesJsonManager {
         return ENTRIES_JSON_PATH + FileEntriesJsonManager.getJsonFileName(flavor);
     }
 
-    public static List<String> readFileEntriesJson(Filer filer, String flavor) {
-
-        // read json content
-        try {
-            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT,
-                    FileEntriesJsonManager.JSON_PACKAGE, FileEntriesJsonManager.getJsonFileName(flavor));
-            Utils.logMessage(Diagnostic.Kind.NOTE, "info file got from filer: " + fileObj.getName());
-
-            Reader reader = fileObj.openReader(false);
-            BufferedReader bufferedReader = new BufferedReader(reader);
-
-            StringBuilder builder = new StringBuilder();
-            String aux = "";
-
-            while ((aux = bufferedReader.readLine()) != null) {
-                builder.append(aux);
-            }
-            bufferedReader.close();
-            reader.close();
-
-            String fileContent = builder.toString();
-            return fromJson(fileContent);
-
-        } catch (IOException e) {
-            Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to read info file: " + e);
-            return null;
-        }
-
-//        File json = new File(getJsonFilePath(flavor));
-//        if (!json.exists()) {
-//            return null;
-//        }
+//    public static List<String> readFileEntriesJson(Filer filer, String flavor) {
 //
-//        Path jsonPath = Paths.get(getJsonFilePath(flavor));
+//        // read json content
 //        try {
-//            String jsonContent = new String(Files.readAllBytes(jsonPath));
-//            return fromJson(jsonContent);
+//            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT,
+//                    FileEntriesJsonManager.JSON_PACKAGE, FileEntriesJsonManager.getJsonFileName(flavor));
+//            Utils.logMessage(Diagnostic.Kind.NOTE, "info file got from filer: " + fileObj.getName());
+//
+//            Reader reader = fileObj.openReader(false);
+//            BufferedReader bufferedReader = new BufferedReader(reader);
+//
+//            StringBuilder builder = new StringBuilder();
+//            String aux = "";
+//
+//            while ((aux = bufferedReader.readLine()) != null) {
+//                builder.append(aux);
+//            }
+//            bufferedReader.close();
+//            reader.close();
+//
+//            String fileContent = builder.toString();
+//            return fromJson(fileContent);
 //
 //        } catch (IOException e) {
-//            Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to open jsonEntries file: " + e);
+//            Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to read info file: " + e);
 //            return null;
 //        }
-    }
+//
+////        File json = new File(getJsonFilePath(flavor));
+////        if (!json.exists()) {
+////            return null;
+////        }
+////
+////        Path jsonPath = Paths.get(getJsonFilePath(flavor));
+////        try {
+////            String jsonContent = new String(Files.readAllBytes(jsonPath));
+////            return fromJson(jsonContent);
+////
+////        } catch (IOException e) {
+////            Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to open jsonEntries file: " + e);
+////            return null;
+////        }
+//    }
 
     public static void writeFileEntriesJson(Filer filer, Map<String, GeneratedFileEntries> generatedFiles) {
 
@@ -170,19 +170,19 @@ public class FileEntriesJsonManager {
         }
 
 
-        // get all entries json
-        for (String flavor : generatedFiles.keySet()) {
-
-            GeneratedFileEntries entries = generatedFiles.get(flavor);
-
-            String flavorFrom = entries.mFlavorFrom;
-
-
-            // write generated files details to json
-            String totalJson = FileEntriesJsonManager.toJson(entries.mEntries);
-
-            // write the json to the right flavor
-        }
+//        // get all entries json
+//        for (String flavor : generatedFiles.keySet()) {
+//
+//            GeneratedFileEntries entries = generatedFiles.get(flavor);
+//
+//            String flavorFrom = entries.mFlavorFrom;
+//
+//
+//            // write generated files details to json
+//            String totalJson = FileEntriesJsonManager.toJson(entries.mEntries);
+//
+//            // write the json to the right flavor
+//        }
 
 
     }

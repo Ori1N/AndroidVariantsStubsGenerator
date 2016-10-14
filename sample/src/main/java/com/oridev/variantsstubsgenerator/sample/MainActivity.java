@@ -6,6 +6,8 @@ import android.view.View;
 import android.widget.TextView;
 
 
+import com.oridev.variantsstubsgenerator.flavor1.Flavor1SpecificFunctionality;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -24,10 +26,10 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.main_button)
     public void onButtonClick( View v) {
-        showMessages();
+        showFlavor1Message();
     }
 
-    private void showMessages() {
+    private void showFlavor1Message() {
 
         // get some text from flavor1
         String message1 = Flavor1SpecificFunctionality.getFlavor1Message(this);
@@ -37,18 +39,6 @@ public class MainActivity extends AppCompatActivity {
             // this means we called flavor1 method from flavor2
             message1 = getString(R.string.message_flavor1_failure);
         }
-
-        /* this won't compile on flavor1 because we didn't use the annotation... */
-        //String message2 = Flavor2SpecificFunctionality.getFlavor2Message(this);
-
-        /* uncomment for using the annotation in flavor2 */
-        // get some text from flavor2
-//        try {
-//            message2 = Flavor2SpecificFunctionality.getFlavor2MessageOrThrow();
-//        } catch (RuntimeException e) {
-//            // this means we called flavor2 method from flavor1 and specified to throw exception if trying to use stubs
-//            message2 = "Got exception... good thing it's not on production yet...";
-//        }
 
         message1View.setText(message1);
     }

@@ -1,6 +1,4 @@
-
 apply plugin: 'java'
-//apply plugin: 'groovy'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
@@ -22,20 +20,4 @@ dependencies {
 
 }
 
-apply from: '../generate-sources.gradle'
-
-//compileJavaWithJavac() {
-//    doFirst {
-//        main = mainClass
-//    }
-//}
-
-//task addGeneratedFiles << {
-//
-//}
-
-//task addGeneratedFiles(JavaExec) {
-//    println("Adding generated files..")
-//    main = mainClass
-//    classpath = sourceSets.main.runtimeClasspath
-//}
+apply from: '../artifacts.gradle'

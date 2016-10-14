@@ -5,13 +5,27 @@
 
     <groupId>com.oridev.variantsstubsgenerator</groupId>
     <artifactId>variantsstubsgenerator-compiler</artifactId>
-    <version>1.0-beta1.6</version>
+    <version>0.1.2</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
     <dependencies>
         <dependency>
             <groupId>com.oridev.variantsstubsgenerator</groupId>
             <artifactId>annotation</artifactId>
-            <version>1.0-beta1</version>
+            <version>1.0-beta1.6</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -1,12 +1,6 @@
 package com.oridev.variantsstubsgenerator.plugin;
 
-import com.android.build.gradle.AppPlugin
-import com.android.build.gradle.LibraryPlugin
-import com.android.build.gradle.api.BaseVariant
-import com.android.build.gradle.api.BaseVariantOutput
-import com.android.builder.model.ProductFlavor
 import groovy.json.JsonSlurper
-import groovy.json.StringEscapeUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
