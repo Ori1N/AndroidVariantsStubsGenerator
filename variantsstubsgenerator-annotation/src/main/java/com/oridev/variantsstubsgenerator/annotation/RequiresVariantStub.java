@@ -15,14 +15,15 @@ import java.lang.annotation.Target;
 public @interface RequiresVariantStub {
 
     /**
-     * When using stubs for build types (debug-release) this should be {@code BuildConfig.BUILD_TYPE}.
-     * <br> When using stubs for flavors:
+     * When using stubs for flavors:
      * <br> - For project using multiple gradle dimensions this should be {@code BuildConfig.FLAVOR_{dimension}}
      * <br> - For other projects (single dimension) this should be {@code BuildConfig.FLAVOR}.
      *
      * @return The name of the current flavor.
      */
     String flavorFrom();
+    // * When using stubs for build types (debug-release) this should be {@code BuildConfig.BUILD_TYPE}.
+
 
     /**
      * @return The name of the flavor we want to generate the stub class into.

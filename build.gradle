@@ -7,8 +7,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.0'
         classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-        classpath project(':variantsstubsgenerator-plugin')
-        //classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.2'
+        classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.5'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }

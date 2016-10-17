@@ -5,8 +5,6 @@ targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:2.2.0'
-
 }
 
 apply from: '../artifacts.gradle'
