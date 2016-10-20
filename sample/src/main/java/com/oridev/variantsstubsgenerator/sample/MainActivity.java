@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 
 
-import com.oridev.variantsstubsgenerator.flavor1.Flavor1SpecificFunctionality;
+import com.oridev.variantsstubsgenerator.utils.FruitUtils;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,9 +32,9 @@ public class MainActivity extends AppCompatActivity {
     private void showFlavor1Message() {
 
         // get some text from flavor1
-        String message1 = Flavor1SpecificFunctionality.getFlavor1Message(this);
+        String message1 = FruitUtils.getPulpMessage(this);
         /* It's ok if the IDE complains about this condition always being false (if your're
-           on flavor1) or always true (if your'e on flavor2) */
+           on flavor orange) or always true (if your'e on flavor apple) */
         if (message1 == null) {
             // this means we called flavor1 method from flavor2
             message1 = getString(R.string.message_flavor1_failure);

@@ -50,7 +50,7 @@ buildscript {
    }
   dependencies {
     classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.2'
+    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.5'
   }
 }
 ```
@@ -69,7 +69,7 @@ dependencies {
     ...
     
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.1.2'
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.2'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.5'
     apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.1.2'
 }
 

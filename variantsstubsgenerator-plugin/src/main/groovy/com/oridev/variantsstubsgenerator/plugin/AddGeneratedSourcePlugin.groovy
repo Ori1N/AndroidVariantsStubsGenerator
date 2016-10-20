@@ -21,27 +21,31 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
                             // for each flavor: read json file
                             def flavorName = flavor.name
 
-                            def filesJsonDebug = new File(getJsonPath(project, "debug", flavorName))
-                            if (filesJsonDebug.exists()) {
-                                def filesPaths = new JsonSlurper().parse(filesJsonDebug)
-                                filesPaths.each { path ->
-                                    println "adding generated source {$path} to flavor ${flavorName}"
-                                    "${flavorName}" {
-                                        java.srcDirs += new File(path)
+                            def filesJson = new File(getJsonPath(project))
+                            if (filesJson.exists()) {
+                                def filesPaths = new JsonSlurper().parse(filesJson)
+                                filesPaths.each { generatedEntry ->
+                                    // if this generated file should be added to current flavor
+                                    if (generatedEntry.flavor.equals(flavorName)) {
+                                        println "adding generated source {$generatedEntry.path} to flavor ${generatedEntry.flavor}"
+                                        // add generated file path to flavor source set
+                                        "${flavorName}" {
+                                            java.srcDirs += new File(generatedEntry.path)
+                                        }
                                     }
                                 }
                             }
-
-                            def filesJsonRelease = new File(getJsonPath(project, "release", flavorName))
-                            if (filesJsonRelease.exists()) {
-                                def filesPaths = new JsonSlurper().parse(filesJsonRelease)
-                                filesPaths.each { path ->
-                                    println "adding generated source {$path} to flavor ${flavorName}"
-                                    "${flavorName}" {
-                                        java.srcDirs += new File(path)
-                                    }
-                                }
-                            }
+//
+//                            def filesJsonRelease = new File(getJsonPath(project, "release", flavorName))
+//                            if (filesJsonRelease.exists()) {
+//                                def filesPaths = new JsonSlurper().parse(filesJsonRelease)
+//                                filesPaths.each { path ->
+//                                    println "adding generated source {$path} to flavor ${flavorName}"
+//                                    "${flavorName}" {
+//                                        java.srcDirs += new File(path)
+//                                    }
+//                                }
+//                            }
                         } catch (Exception e) {
                             println(e);
                         }
@@ -68,9 +72,12 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
 //        }
 //    }
 
-    static String getJsonPath(Project project, String buildType, String flavorName) {
-        return "$project.buildDir/generated/source/apt/${flavorName}/${buildType}/" +
-                "variantsstubsgenerator/meta/variant_generated_files_${flavorName}.json";
+    static String getJsonPath(Project project) {
+        return "$project.buildDir/generated/assets/variantsStubsGenerator/meta/generated_files.json";
+
+//        return "$project.buildDir/generated/source/apt/${flavorName}/${buildType}/" +
+//                "variantsstubsgenerator/meta/variant_generated_files_${flavorName}.json";
+
     }
 
 }

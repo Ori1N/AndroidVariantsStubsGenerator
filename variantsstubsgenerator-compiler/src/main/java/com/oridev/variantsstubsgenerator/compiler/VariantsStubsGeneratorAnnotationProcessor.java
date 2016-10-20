@@ -1,8 +1,6 @@
 package com.oridev.variantsstubsgenerator.compiler;
 
-import com.google.auto.common.SuperficialValidation;
 import com.google.auto.service.AutoService;
-import com.oridev.variantsstubsgenerator.Utils;
 import com.oridev.variantsstubsgenerator.annotation.GeneratedVariantStub;
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 import com.oridev.variantsstubsgenerator.exception.AttemptToUseStubException;
@@ -13,19 +11,10 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -44,9 +33,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
-import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
-import javax.tools.StandardLocation;
 
 
 @AutoService(Processor.class)
@@ -95,64 +82,47 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-        Map<String, GeneratedFileEntries> generatedFilesByFlavors = new HashMap<>();
-        // fixme: temp solution! won't work for multiple flavored builds...
-        String auxFlavorFrom = null;
+        List<GeneratedFileEntry> generatedFiles = new ArrayList<>();
 
         // generate stubs for annotated classes
         Set<? extends Element> generatingElements = roundEnv.getElementsAnnotatedWith(RequiresVariantStub.class);
         for (Element element : generatingElements) {
 
-            if (!SuperficialValidation.validateElement(element)) {
-                continue;
-            }
+//            if (!SuperficialValidation.validateElement(element)) {
+//                continue;
+//            }
 
             JavaFile file = generateStubJavaFile((TypeElement) element);
+            if (file != null) {
 
-            RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
-            final String flavorFrom = annotation.flavorFrom();
-            final String flavorTo = annotation.flavorTo();
-            auxFlavorFrom = flavorFrom;
+                RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
+                final String flavorTo = annotation.flavorTo();
 
-            try {
-                if (!doesClassExist(file, flavorFrom, flavorTo)) {
-                    String path = writeSourceFile(file, flavorFrom, flavorTo);
+                try {
+                    String basePath = getSourceSetPath(flavorTo);
+                    writeSourceFile(file, basePath);
 
-                    // add generated file to map
-                    if (generatedFilesByFlavors.get(flavorTo) == null) {
-                        // for first file added to this flavor - create new GeneratedFilesEntries object
-                        generatedFilesByFlavors.put(flavorTo, new GeneratedFileEntries(flavorFrom, path));
-                    } else {
-                        // if GeneratedFilesEntries object already exists for flavorTo - add entry to existing object
-                        generatedFilesByFlavors.get(flavorTo).addEntry(path);
+                    String path = getPathForFile(file, flavorTo);
+                    if (path != null) {
+                        generatedFiles.add(new GeneratedFileEntry(flavorTo, path));
                     }
 
+                } catch (Throwable e) {
+                    logMessage(Diagnostic.Kind.NOTE, "Processing failed for file " + file.typeSpec.name + ": " + e);
                 }
-            } catch (Throwable e) {
-                logMessage(Diagnostic.Kind.NOTE, "Processing failed: " + e);
             }
         }
 
-//        Set<? extends Element> generatedElements = roundEnv.getElementsAnnotatedWith(GeneratedVariantStub.class);
-//        for (Element element : generatedElements) {
-//            Utils.logMessage(Diagnostic.Kind.NOTE, "Generated class: " + element.getSimpleName());
-//        }
-//
-//        for (Element element : roundEnv.getRootElements()) {
-//            Utils.logMessage(Diagnostic.Kind.NOTE, "Root element class: " + element.getSimpleName());
-//        }
-
-        if (!generatedFilesByFlavors.isEmpty()) {
-            // write generated files to their target flavors
-            writeFileEntriesJson(generatedFilesByFlavors);
+        if (!generatedFiles.isEmpty()) {
+            // write generated files paths to the info json
+            writeFileEntriesJson(generatedFiles);
         }
-
-
-        //logMessage(Diagnostic.Kind.NOTE, "Processing done.");
 
         return true;
     }
 
+
+    /* JavaFile object generation -------------------------------- */
 
     private JavaFile generateStubJavaFile(TypeElement element) {
         logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + element.getSimpleName());
@@ -223,113 +193,6 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         }
     }
 
-    private boolean doesClassExist(JavaFile file, String flavorFrom, String flavorTo) {
-//        try {
-//            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT, file.packageName, file.typeSpec.name);
-//            //return fileObj != null;
-//        } catch (IOException e) {
-//            logMessage(Diagnostic.Kind.WARNING, "doesClassExist failure: " + e);
-//        }
-        return false;
-        // todo: implement!
-    }
-
-    private String writeSourceFile(JavaFile javaFile, String flavorFrom, String flavorTo) throws IOException {
-        final String EXT = "_d_";
-
-        // create draft file (copy of the file we want to create but in flavorFrom)
-        String fileName = javaFile.packageName.isEmpty()
-                ? javaFile.typeSpec.name
-                : javaFile.packageName + "." + EXT + javaFile.typeSpec.name;
-        List<Element> originatingElements = javaFile.typeSpec.originatingElements;
-        JavaFileObject filerSourceFile = filer.createSourceFile(fileName,
-                originatingElements.toArray(new Element[originatingElements.size()]));
-        try (Writer writer = filerSourceFile.openWriter()) {
-            javaFile.writeTo(writer);
-        } catch (Exception e) {
-            logMessage(Diagnostic.Kind.WARNING, "Failed to write draft file: " + e);
-            try {
-                filerSourceFile.delete();
-            } catch (Exception ignored) { }
-            throw e;
-        }
-
-        // get the desired target path
-        File generatedFile = new File(filerSourceFile.toUri());
-        String targetPathStr = generatedFile.getPath()
-                // set path to flavorTo
-                .replace("generated/source/apt/" + flavorFrom, "generated/source/apt/" + flavorTo)
-                // remove extension from file name
-                .replace("/" + EXT + javaFile.typeSpec.name, "/" + javaFile.typeSpec.name);
-        File targetFile = new File(targetPathStr);
-        File targetDirectory = targetFile.getParentFile();
-
-        targetDirectory.mkdirs();
-        // folder validation.
-//        if (!targetDirectory.isDirectory() && !targetDirectory.mkdir()) {
-//            throw new IOException("Failed to create directory: " + targetDirectory);
-//        }
-
-        // copy the draft file to the real location (flavorTo)
-        logMessage(Diagnostic.Kind.NOTE, "copying generated file to " + targetDirectory);
-        FileWriter fileWriter = null;
-        try {
-            fileWriter = new FileWriter(targetFile);
-            javaFile.writeTo(fileWriter);
-            //Files.copy(generatedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING /*, StandardCopyOption.ATOMIC_MOVE */);
-        } catch (Exception e) {
-            logMessage(Diagnostic.Kind.WARNING, "Error copying file: " + e);
-        } finally {
-            if (fileWriter != null) {
-                try { fileWriter.close(); }
-                catch (IOException e) { }
-            }
-        }
-
-        // change draft file in flavorFrom's class name to temp name
-        Path path = Paths.get(filerSourceFile.toUri());
-        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-        content = content.replaceFirst("class " + javaFile.typeSpec.name, "class " + EXT + javaFile.typeSpec.name);
-        Files.write(path, content.getBytes(StandardCharsets.UTF_8));
-
-
-        /* close filer (no compilation error but now gradle doesn't consider generated files */
-//        if (filer instanceof Closeable) {
-//            try {
-//                ((Closeable) filer).close();
-//            } catch (Exception e) {
-//                logMessage(Diagnostic.Kind.WARNING, "Failed to close filer: " + e);
-//            }
-//        }
-
-        return targetPathStr;
-
-        /* delete file after moving (didn't help) */
-//        try {
-//            //Runtime.getRuntime().exec("rm ./.gradle/2.14.1/taskArtifacts/cache.properties.lock");
-//
-//            boolean deleted = filerSourceFile.delete();
-//            //filer.getResource(StandardLocation.SOURCE_OUTPUT, javaFile.packageName, javaFile.typeSpec.name).delete();
-//            if (!deleted /*|| !filerSourceFile.delete() */) {
-//                logMessage(Diagnostic.Kind.NOTE, "Error deleting file");
-//
-//            }
-//        } catch (Exception e) {
-//            logMessage(Diagnostic.Kind.NOTE, "Failed to delete file: " + e);
-//        }
-
-    }
-
-    private void writeFileEntriesJson(Map<String, GeneratedFileEntries> generatedFiles) {
-
-        if (generatedFiles == null || generatedFiles.size() == 0) {
-            return;
-        }
-
-        FileEntriesJsonManager.writeFileEntriesJson(filer, generatedFiles);
-    }
-
-
     private Object getDefaultReturnTypeForTypeMirror(TypeMirror type) {
         TypeName typeName = TypeName.get(type);
 
@@ -346,6 +209,114 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return 0;
     }
 
+
+    /* Write file ----------------------------------------------- */
+
+    private String mExamplePath = null;
+    private static final String EXAMPLE_PACKAGE = "com.example";
+    private static final String EXAMPLE_NAME = "_d_";
+    private String getExamplePath() {
+        if (mExamplePath == null) {
+
+            String fileName = EXAMPLE_PACKAGE + "." + EXAMPLE_NAME;
+            JavaFileObject filerSourceFile;
+            try {
+                filerSourceFile = filer.createSourceFile(fileName);
+                mExamplePath = filerSourceFile.toUri().getPath();
+
+            } catch (IOException e) {
+                logMessage(Diagnostic.Kind.WARNING, "getExamplePath failed createSourceFile: " + e);
+
+            } finally {
+                // todo: release resource? (avoid following warning:
+                // warning: Unclosed files for the types '[com.example._d_.java]'; these types will not undergo annotation processing
+            }
+        }
+
+        return mExamplePath;
+    }
+
+    private static final String BUILD_RELATIVE_PATH = "generated/source/apt/";
+
+    private String getBuildDir() {
+        String examplePath = getExamplePath();
+        return examplePath.substring(0, examplePath.indexOf(BUILD_RELATIVE_PATH));
+    }
+
+    private String getSourceSetPath(String flavorTo) {
+
+        final String examplePath = getExamplePath();
+
+        /* fix for multiple dimensions projects */
+        String currentFlavor = examplePath.substring(examplePath.indexOf(BUILD_RELATIVE_PATH) + BUILD_RELATIVE_PATH.length());
+        currentFlavor = currentFlavor.substring(0, currentFlavor.indexOf('/'));
+
+        // get the desired target path
+        String fullPath = examplePath
+                // set path to flavorTo
+                .replace(BUILD_RELATIVE_PATH + currentFlavor, BUILD_RELATIVE_PATH + flavorTo);
+
+        // remove package and file from path
+        return fullPath.substring(0, fullPath.indexOf(EXAMPLE_PACKAGE.replaceAll("\\.", "/")));
+    }
+
+    private String getPathForFile(JavaFile javaFile, String flavorTo) {
+
+        final String examplePath = getExamplePath();
+
+        /* fix for multiple dimensions projects */
+        String currentFlavor = examplePath.substring(examplePath.indexOf(BUILD_RELATIVE_PATH) + BUILD_RELATIVE_PATH.length());
+        currentFlavor = currentFlavor.substring(0, currentFlavor.indexOf('/'));
+
+        // get the desired target path
+        return examplePath
+                // set path to flavorTo
+                .replace(BUILD_RELATIVE_PATH + currentFlavor, BUILD_RELATIVE_PATH + flavorTo)
+                // set file package
+                .replace(EXAMPLE_PACKAGE.replaceAll("\\.", "/"), javaFile.packageName.replaceAll("\\.", "/"))
+                // set file name
+                .replace("/" + EXAMPLE_NAME, "/" + javaFile.typeSpec.name);
+    }
+
+    private String writeSourceFile(JavaFile javaFile, String path) {
+        logMessage(Diagnostic.Kind.NOTE, "Writing file " + javaFile.packageName + "." + javaFile.typeSpec.name + "to " + path);
+
+        try {
+//            File targetDir = new File(URI.create(path).getPath()).getParentFile();
+//            if (!targetDir.isDirectory() && !targetDir.mkdir()) {
+//                logMessage(Diagnostic.Kind.WARNING, "Failed to create dir: " + targetDir);
+//                //throw new IOException("Failed to create directory: " + targetDirectory);
+//            }
+
+//            fileWriter = new FileWriter(path);
+//            javaFile.writeTo(fileWriter);
+            javaFile.writeTo(new File(path));
+
+            // get file path
+
+        } catch (Exception e) {
+            logMessage(Diagnostic.Kind.WARNING, "Error copying file " + javaFile.typeSpec.name + ": " + e);
+//        } finally {
+//            if (fileWriter != null) {
+//                try { fileWriter.close(); }
+//                catch (IOException e) { }
+//            }
+        }
+
+        return null;
+    }
+
+
+
+    private void writeFileEntriesJson(List<GeneratedFileEntry> generatedFiles) {
+
+        if (generatedFiles == null || generatedFiles.size() == 0) {
+            return;
+        }
+
+        String buildDir = getBuildDir();
+        FileEntriesJsonManager.updateFileEntriesJson(buildDir, generatedFiles);
+    }
 
 
     /* Utilities --------------------------------------- */
@@ -364,5 +335,93 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             }
         }
     }
+
+
+    /* Drafts / Old Code... */
+    //    private String writeSourceFile(JavaFile javaFile, String flavorFrom, String flavorTo) throws IOException {
+//        final String EXT = "_d_";
+//
+//        // create draft file (copy of the file we want to create but in flavorFrom)
+//        String fileName = javaFile.packageName.isEmpty()
+//                ? javaFile.typeSpec.name
+//                : javaFile.packageName + "." + EXT + javaFile.typeSpec.name;
+//        List<Element> originatingElements = javaFile.typeSpec.originatingElements;
+//        JavaFileObject filerSourceFile = filer.createSourceFile(fileName,
+//                originatingElements.toArray(new Element[originatingElements.size()]));
+//        try (Writer writer = filerSourceFile.openWriter()) {
+//            javaFile.writeTo(writer);
+//        } catch (Exception e) {
+//            logMessage(Diagnostic.Kind.WARNING, "Failed to write draft file: " + e);
+//            try {
+//                filerSourceFile.delete();
+//            } catch (Exception ignored) { }
+//            throw e;
+//        }
+//
+//        // get the desired target path
+//        File generatedFile = new File(filerSourceFile.toUri());
+//        String targetPathStr = generatedFile.getPath()
+//                // set path to flavorTo
+//                .replace("generated/source/apt/" + flavorFrom, "generated/source/apt/" + flavorTo)
+//                // remove extension from file name
+//                .replace("/" + EXT + javaFile.typeSpec.name, "/" + javaFile.typeSpec.name);
+//        File targetFile = new File(targetPathStr);
+//        File targetDirectory = targetFile.getParentFile();
+//
+//        targetDirectory.mkdirs();
+//        // folder validation.
+////        if (!targetDirectory.isDirectory() && !targetDirectory.mkdir()) {
+////            throw new IOException("Failed to create directory: " + targetDirectory);
+////        }
+//
+//        // copy the draft file to the real location (flavorTo)
+//        logMessage(Diagnostic.Kind.NOTE, "copying generated file to " + targetDirectory);
+//        FileWriter fileWriter = null;
+//        try {
+//            fileWriter = new FileWriter(targetFile);
+//            javaFile.writeTo(fileWriter);
+//            //Files.copy(generatedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING /*, StandardCopyOption.ATOMIC_MOVE */);
+//        } catch (Exception e) {
+//            logMessage(Diagnostic.Kind.WARNING, "Error copying file: " + e);
+//        } finally {
+//            if (fileWriter != null) {
+//                try { fileWriter.close(); }
+//                catch (IOException e) { }
+//            }
+//        }
+//
+//        // change draft file in flavorFrom's class name to temp name
+//        Path path = Paths.get(filerSourceFile.toUri());
+//        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+//        content = content.replaceFirst("class " + javaFile.typeSpec.name, "class " + EXT + javaFile.typeSpec.name);
+//        Files.write(path, content.getBytes(StandardCharsets.UTF_8));
+//
+//
+//        /* close filer (no compilation error but now gradle doesn't consider generated files */
+////        if (filer instanceof Closeable) {
+////            try {
+////                ((Closeable) filer).close();
+////            } catch (Exception e) {
+////                logMessage(Diagnostic.Kind.WARNING, "Failed to close filer: " + e);
+////            }
+////        }
+//
+//        return targetPathStr;
+//
+//        /* delete file after moving (didn't help) */
+////        try {
+////            //Runtime.getRuntime().exec("rm ./.gradle/2.14.1/taskArtifacts/cache.properties.lock");
+////
+////            boolean deleted = filerSourceFile.delete();
+////            //filer.getResource(StandardLocation.SOURCE_OUTPUT, javaFile.packageName, javaFile.typeSpec.name).delete();
+////            if (!deleted /*|| !filerSourceFile.delete() */) {
+////                logMessage(Diagnostic.Kind.NOTE, "Error deleting file");
+////
+////            }
+////        } catch (Exception e) {
+////            logMessage(Diagnostic.Kind.NOTE, "Failed to delete file: " + e);
+////        }
+//
+//    }
 
 }

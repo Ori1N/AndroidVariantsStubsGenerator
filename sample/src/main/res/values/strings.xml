@@ -2,11 +2,9 @@
 
     <string name="app_name">VariantsStubsGeneratorSample</string>
 
-    <string name="button_text">Click me</string>
+    <string name="button_text">Got pulp?</string>
 
-    <string name="message_flavor1_success">Flavor1 says hello!</string>
-    <string name="message_flavor1_failure">Got null, probably should not have called flavor1 method from flavor2...</string>
-
-    <string name="message_flavor2_success">this is flavor2 real method</string>
+    <string name="message_orange_success">Ohh yeah!</string>
+    <string name="message_flavor1_failure">Got null, probably so probably not...</string>
 
 </resources>
