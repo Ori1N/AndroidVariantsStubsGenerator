@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.oridev.variantsstubsgenerator</groupId>
-    <artifactId>variantsstubsgenerator-plugin</artifactId>
-    <version>0.1.5</version>
+    <artifactId>variantsstubsgenerator-annotation</artifactId>
+    <version>0.2.0</version>
 
-  <build>
+    <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -19,6 +19,6 @@
         </configuration>
       </plugin>
     </plugins>
-  </build>
+    </build>
 
 </project>

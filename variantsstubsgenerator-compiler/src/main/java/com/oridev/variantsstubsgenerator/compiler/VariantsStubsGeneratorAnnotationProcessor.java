@@ -164,8 +164,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
                         if (throwException) {
                             // add throw statement
-                            methodBuilder.addStatement("throw new $T($S, $S)", AttemptToUseStubException.class,
-                                    annotation.flavorFrom(), annotation.flavorTo());
+                            methodBuilder.addStatement("throw new $T($S, $S)", AttemptToUseStubException.class, annotation.flavorTo());
 
                         } else if (methodReturnType.getKind() != TypeKind.VOID) {
                             // add return statement if required
