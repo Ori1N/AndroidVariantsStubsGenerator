@@ -46,16 +46,16 @@ android {
         }
     }
 
-    flavorDimensions('dimenUserType', 'dimenFruit')
+    //flavorDimensions('dimenUserType', 'dimenFruit')
 
     productFlavors {
 
-        free {
-            dimension 'dimenUserType'
-        }
-        paid {
-            dimension 'dimenUserType'
-        }
+//        free {
+//            dimension 'dimenUserType'
+//        }
+//        paid {
+//            dimension 'dimenUserType'
+//        }
 
         orange {
             dimension 'dimenFruit'
@@ -75,12 +75,12 @@ dependencies {
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.android.support:multidex:1.0.1'
 
-    apt project(':variantsstubsgenerator-compiler')
-    compile project(':variantsstubsgenerator-plugin')
+//    apt project(':variantsstubsgenerator-compiler')
+//    compile project(':variantsstubsgenerator-plugin')
 
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.1.2'
-    //apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.1.4'
-    //compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.1.5'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.0'
+    apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.0'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.0'
 
     compile 'com.jakewharton:butterknife:8.2.1'
     apt 'com.jakewharton:butterknife-compiler:8.2.1'
@@ -89,4 +89,4 @@ dependencies {
 
 }
 
-//apply plugin: 'variantsstubsgenerator'
+apply plugin: 'variantsstubsgenerator'

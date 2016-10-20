@@ -13,10 +13,7 @@ import com.oridev.variantsstubsgenerator.sample.utils.AppConfig;
  * Created by Ori on 18/08/2016.
  */
 @RequiresVariantStub(
-        // flavorFrom is current flavor, meaning we can use BuildConfig.FLAVOR_{dimension}
-        flavorFrom = BuildConfig.FLAVOR_dimenFruit,
         // flavorTo is the flavor we want stubs to be generated to.
-        // When using complicated flavors system I prefer using custom defined constants
         flavorTo = AppConfig.DimenFruit.APPLE)
 public class FruitUtils {
 
