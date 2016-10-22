@@ -30,4 +30,28 @@ public class FruitUtils {
         // For private methods stubs are not necessary
     }
 
+
+    public class InnerClass {
+
+    }
+
+    public interface GenericInnerInterface<T> {
+
+        /**
+         * Listener for operation progress update.
+         *
+         * @param progress The current progress.
+         * @param max      The total amount.
+         */
+        void onProgressUpdate(Long progress, Long max, Object extraData);
+
+        /**
+         * Listener for operation finished successfully.
+         *
+         * @param response The response.
+         */
+        void onFinish(T response);
+    }
+
+
 }

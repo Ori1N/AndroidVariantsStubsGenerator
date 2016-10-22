@@ -1,6 +1,7 @@
 package com.oridev.variantsstubsgenerator.compiler;
 
 import com.google.auto.service.AutoService;
+import com.oridev.variantsstubsgenerator.Utils;
 import com.oridev.variantsstubsgenerator.annotation.GeneratedVariantStub;
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 import com.oridev.variantsstubsgenerator.exception.AttemptToUseStubException;
@@ -9,6 +10,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeVariableName;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +30,11 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
+import javax.naming.OperationNotSupportedException;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
@@ -39,11 +42,9 @@ import javax.tools.JavaFileObject;
 @AutoService(Processor.class)
 public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static ProcessingEnvironment environment;
-    private Elements elementUtils;
-    //private Types typesUtils;
     private Filer filer;
 
     //private boolean mFirstRound = true;
@@ -52,8 +53,6 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     public synchronized void init(ProcessingEnvironment env) {
         super.init(env);
         environment = env;
-        elementUtils = env.getElementUtils();
-        //typesUtils = env.getTypeUtils();
         filer = env.getFiler();
     }
 
@@ -88,11 +87,10 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         Set<? extends Element> generatingElements = roundEnv.getElementsAnnotatedWith(RequiresVariantStub.class);
         for (Element element : generatingElements) {
 
-//            if (!SuperficialValidation.validateElement(element)) {
-//                continue;
-//            }
+            TypeElement typeElement = (TypeElement) element;
+            final String fileQualifiedName = typeElement.getQualifiedName().toString();
 
-            JavaFile file = generateStubJavaFile((TypeElement) element);
+            JavaFile file = generateStubJavaFile(typeElement);
             if (file != null) {
 
                 RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
@@ -108,7 +106,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                     }
 
                 } catch (Throwable e) {
-                    logMessage(Diagnostic.Kind.NOTE, "Processing failed for file " + file.typeSpec.name + ": " + e);
+                    Utils.logMessage(Diagnostic.Kind.NOTE, "Processing failed for file " + fileQualifiedName + ": " + e, true);
                 }
             }
         }
@@ -125,71 +123,176 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     /* JavaFile object generation -------------------------------- */
 
     private JavaFile generateStubJavaFile(TypeElement element) {
-        logMessage(Diagnostic.Kind.NOTE, "Processing annotated class " + element.getSimpleName());
+        final String qualifiedName = element.getQualifiedName().toString();
+        final RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
 
-        // get annotation parameters
-        RequiresVariantStub annotation = element.getAnnotation(RequiresVariantStub.class);
-        final boolean throwException = annotation.throwException();
-
-        // start building the java stubs file
+        // generate stub java-file-object
         try {
-            // Create the duplicate class
-            TypeSpec.Builder classBuilder = TypeSpec.classBuilder(element.getSimpleName().toString());
-            Modifier[] classModifiers = element.getModifiers().toArray(new Modifier[element.getModifiers().size()]);
-            classBuilder.addModifiers(classModifiers);
-
-            classBuilder.addAnnotation(GeneratedVariantStub.class);
-
-            // for each public element inside the annotated class
-            for (Element classInnerElement : element.getEnclosedElements()) {
-                if (classInnerElement.getModifiers().contains(Modifier.PUBLIC)) {
-
-                    // create stubs for methods
-                    if (classInnerElement.getKind() == ElementKind.METHOD) {
-                        ExecutableElement method = (ExecutableElement) classInnerElement;
-
-                        TypeMirror methodReturnType = method.getReturnType();
-
-                        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.getSimpleName().toString())
-                                .addModifiers(method.getModifiers())
-                                .returns(TypeName.get(methodReturnType));
-
-                        // add parameters
-                        for (VariableElement methodParam : method.getParameters()) {
-                            TypeName methodParamType = TypeName.get(methodParam.asType());
-                            String methodParamName = methodParam.getSimpleName().toString();
-                            ParameterSpec.Builder paramBuilder = ParameterSpec.builder(methodParamType, methodParamName);
-                            methodBuilder.addParameter(paramBuilder.build());
-                        }
-
-                        if (throwException) {
-                            // add throw statement
-                            methodBuilder.addStatement("throw new $T($S, $S)", AttemptToUseStubException.class, annotation.flavorTo());
-
-                        } else if (methodReturnType.getKind() != TypeKind.VOID) {
-                            // add return statement if required
-                            methodBuilder.addStatement("return " + getDefaultReturnTypeForTypeMirror(methodReturnType));
-                        }
-
-                        classBuilder.addMethod(methodBuilder.build());
-                    }
-
-                    // todo: handle non methods elements! */
-                }
-            }
+            TypeSpec typeSpec = generateStubTypeObject(element, annotation);
 
             // write the new file
-            String classPackage = element.getQualifiedName().toString();
-            classPackage = classPackage.substring(0, classPackage.lastIndexOf('.')); // todo: handle inner classes!
+            String typePackage = qualifiedName.substring(0, qualifiedName.lastIndexOf('.'));
 
-            return JavaFile.builder(classPackage, classBuilder.build())
-                    .addFileComment("Generated code from VariantsStubsGenerator library. Do not modify!")
+            return JavaFile.builder(typePackage, typeSpec)
+                    .addFileComment("Generated code from annotated class " + qualifiedName + ", Do not modify!")
                     .build();
 
         } catch (Exception e) {
-            logMessage(Diagnostic.Kind.WARNING, "generateStubJavaFile failure: " + e);
+            Utils.logMessage(Diagnostic.Kind.WARNING, "generateStubJavaFile failure: " + e);
             return null;
         }
+    }
+
+    private TypeSpec generateStubTypeObject(TypeElement element, RequiresVariantStub annotation) {
+
+        final String simpleName = element.getSimpleName().toString();
+        final String qualifiedName = element.getQualifiedName().toString();
+
+        // get annotation parameters
+        final boolean throwException = annotation.throwException();
+
+        // create type builder
+        TypeSpec.Builder builder;
+
+        // get element kind. since this is a TypeElement this must be type
+        ElementKind elementKind = element.getKind();
+        switch (elementKind) {
+
+            case CLASS:
+                builder = TypeSpec.classBuilder(simpleName);
+                break;
+
+            case INTERFACE:
+                builder = TypeSpec.interfaceBuilder(simpleName);
+                break;
+
+            case ENUM:
+                builder = TypeSpec.enumBuilder(simpleName);
+                break;
+
+            case ANNOTATION_TYPE:
+                throw new IllegalArgumentException("Stub generation for annotation types is still not supported... :(");
+//                builder = TypeSpec.annotationBuilder(simpleName);
+//                break;
+
+            default:
+                throw new EnumConstantNotPresentException(ElementKind.class, elementKind.name());
+
+        }
+
+        // add type modifiers (private, static, final...)
+        builder.addModifiers(getModifiersForType(element));
+
+        // add type parameters (generics)
+        builder.addTypeVariables(getTypeParametersForType(element));
+
+        // add type annotations
+
+
+        // for each public element inside the annotated type
+        for (Element innerElement : element.getEnclosedElements()) {
+            if (innerElement.getModifiers().contains(Modifier.PUBLIC)) {
+
+                String innerElementName = innerElement.getSimpleName().toString();
+                ElementKind innerElementKind = innerElement.getKind();
+
+                // create inner types
+                if (innerElementKind.isClass() || innerElementKind.isInterface()) {
+                    TypeSpec innerTypeSpec = generateStubTypeObject((TypeElement) innerElement, annotation);
+                    builder.addType(innerTypeSpec);
+
+                    // create stubs for methods
+                } else if (innerElementKind == ElementKind.METHOD) {
+                    MethodSpec methodSpec = generateStubMethodObject((ExecutableElement) innerElement, throwException, qualifiedName);
+                    builder.addMethod(methodSpec);
+
+                } else if (innerElementKind == ElementKind.ENUM_CONSTANT) {
+                    builder.addEnumConstant(innerElementName);
+                }
+
+                // todo: handle non methods elements! */
+
+            }
+
+        }
+
+        return builder.build();
+    }
+
+    private MethodSpec generateStubMethodObject(ExecutableElement method, boolean throwException, String typeQualifiedName) {
+        final String methodName = method.getSimpleName().toString();
+
+        StringBuilder infoStrBuilder = new StringBuilder(typeQualifiedName + "$" + methodName + "(");
+
+        TypeMirror methodReturnType = method.getReturnType();
+
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
+                .addModifiers(method.getModifiers())
+                .returns(TypeName.get(methodReturnType));
+
+
+        // add parameters
+        List<? extends VariableElement> methodParams = method.getParameters();
+        for (int i = 0; i < methodParams.size(); i++) {
+            VariableElement methodParam = methodParams.get(i);
+
+            TypeName methodParamType = TypeName.get(methodParam.asType());
+            String methodParamName = methodParam.getSimpleName().toString();
+            ParameterSpec.Builder paramBuilder = ParameterSpec.builder(methodParamType, methodParamName);
+            methodBuilder.addParameter(paramBuilder.build());
+
+            infoStrBuilder.append(methodParamType);
+            if (i < methodParams.size() - 1) {
+                infoStrBuilder.append(", ");
+            }
+        }
+
+        infoStrBuilder.append(")");
+
+        if (throwException) {
+            String info = infoStrBuilder.toString();
+            // add throw statement
+            methodBuilder.addStatement("throw new $T($S)", AttemptToUseStubException.class, info);
+
+        } else if (methodReturnType.getKind() != TypeKind.VOID) {
+            // add return statement if required
+            methodBuilder.addStatement("return " + getDefaultReturnTypeForTypeMirror(methodReturnType));
+        }
+
+        return methodBuilder.build();
+    }
+
+    /* Object Generation Aux */
+
+    private Modifier[] getModifiersForType(TypeElement element) {
+        List<Modifier> modifierList = new ArrayList<>(element.getModifiers());
+
+        if (element.getKind().isInterface()) {
+            modifierList.remove(Modifier.ABSTRACT);
+        }
+
+        return modifierList.toArray(new Modifier[modifierList.size()]);
+    }
+
+    private List<TypeVariableName> getTypeParametersForType(TypeElement element) {
+        List<? extends TypeParameterElement> typeParameters = element.getTypeParameters();
+
+        List<TypeVariableName> typeNames = new ArrayList<>();
+        for (TypeParameterElement typeParameter : typeParameters) {
+
+            // get generic inheritance data
+            List<? extends TypeMirror> typeParameterBoundsTypeMirror = typeParameter.getBounds();
+            TypeName[] typeParameterBoundsTypeName = new TypeName[typeParameterBoundsTypeMirror.size()];
+            for (int i = 0; i < typeParameterBoundsTypeMirror.size(); i++) {
+                typeParameterBoundsTypeName[i] = TypeName.get(typeParameterBoundsTypeMirror.get(i));
+            }
+
+            TypeVariableName typeVariable = TypeVariableName.get(
+                    typeParameter.getSimpleName().toString(), typeParameterBoundsTypeName);
+            typeNames.add(typeVariable);
+        }
+
+        return typeNames;
     }
 
     private Object getDefaultReturnTypeForTypeMirror(TypeMirror type) {
@@ -224,7 +327,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                 mExamplePath = filerSourceFile.toUri().getPath();
 
             } catch (IOException e) {
-                logMessage(Diagnostic.Kind.WARNING, "getExamplePath failed createSourceFile: " + e);
+                Utils.logMessage(Diagnostic.Kind.WARNING, "getExamplePath failed createSourceFile: " + e);
 
             } finally {
                 // todo: release resource? (avoid following warning:
@@ -277,32 +380,15 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                 .replace("/" + EXAMPLE_NAME, "/" + javaFile.typeSpec.name);
     }
 
-    private String writeSourceFile(JavaFile javaFile, String path) {
-        logMessage(Diagnostic.Kind.NOTE, "Writing file " + javaFile.packageName + "." + javaFile.typeSpec.name + "to " + path);
+    private void writeSourceFile(JavaFile javaFile, String path) {
+        Utils.logMessage(Diagnostic.Kind.NOTE, "Writing file [" + javaFile.packageName + "." +
+                javaFile.typeSpec.name + "] sourceSetPath [" + path + "]", true);
 
         try {
-//            File targetDir = new File(URI.create(path).getPath()).getParentFile();
-//            if (!targetDir.isDirectory() && !targetDir.mkdir()) {
-//                logMessage(Diagnostic.Kind.WARNING, "Failed to create dir: " + targetDir);
-//                //throw new IOException("Failed to create directory: " + targetDirectory);
-//            }
-
-//            fileWriter = new FileWriter(path);
-//            javaFile.writeTo(fileWriter);
             javaFile.writeTo(new File(path));
-
-            // get file path
-
         } catch (Exception e) {
-            logMessage(Diagnostic.Kind.WARNING, "Error copying file " + javaFile.typeSpec.name + ": " + e);
-//        } finally {
-//            if (fileWriter != null) {
-//                try { fileWriter.close(); }
-//                catch (IOException e) { }
-//            }
+            Utils.logMessage(Diagnostic.Kind.WARNING, "Error copying file " + javaFile.typeSpec.name + ": " + e);
         }
-
-        return null;
     }
 
 
@@ -320,9 +406,10 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     /* Utilities --------------------------------------- */
 
-    public static void logMessage(Diagnostic.Kind kind, String message) {
 
-        if (DEBUG) {
+    public static void logMessage(Diagnostic.Kind kind, String message, boolean showOnRelease) {
+
+        if (showOnRelease || DEBUG) {
             try {
                 if (message != null) {
                     environment.getMessager().printMessage(kind, message);

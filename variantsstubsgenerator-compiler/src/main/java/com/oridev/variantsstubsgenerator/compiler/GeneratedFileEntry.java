@@ -16,10 +16,17 @@ public class GeneratedFileEntry {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == this) return true;
+
         if (obj == null || !(obj instanceof GeneratedFileEntry)) {
             return false;
         }
         GeneratedFileEntry entry = (GeneratedFileEntry) obj;
         return flavor.equals(entry.flavor) && path.equals(entry.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return flavor.hashCode() + path.hashCode();
     }
 }

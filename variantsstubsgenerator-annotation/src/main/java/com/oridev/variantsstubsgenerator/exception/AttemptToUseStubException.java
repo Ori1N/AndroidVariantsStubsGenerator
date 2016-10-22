@@ -6,8 +6,8 @@ package com.oridev.variantsstubsgenerator.exception;
  */
 public class AttemptToUseStubException extends UnsupportedOperationException {
 
-    public AttemptToUseStubException(String flavorTo) {
-        super("Attempt to use flavor [" + flavorTo + "] stub!");
+    public AttemptToUseStubException(String info) {
+        super("Attempt to use generated stub!\n" + info);
     }
 
 }

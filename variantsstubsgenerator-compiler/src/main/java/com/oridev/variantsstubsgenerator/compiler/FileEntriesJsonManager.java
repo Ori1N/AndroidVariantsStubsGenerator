@@ -38,88 +38,28 @@ public class FileEntriesJsonManager {
         if (generatedFiles != null) {
             generatedFiles.addAll(newGeneratedFiles);
             // recreate list from set (unique)
-            Set<GeneratedFileEntry> allGeneratedFilesSet = new LinkedHashSet<>(generatedFiles);
+            Set<GeneratedFileEntry> allGeneratedFilesSet = new LinkedHashSet<>();
+            allGeneratedFilesSet.addAll(generatedFiles);
             generatedFiles = new ArrayList<>(allGeneratedFilesSet);
         } else {
             generatedFiles = newGeneratedFiles;
         }
 
-        Utils.logMessage(Diagnostic.Kind.NOTE, "rewriting info json with " + generatedFiles.size() + " entries");
+        Utils.logMessage(Diagnostic.Kind.NOTE, "generating info json with " + generatedFiles.size() + " generated files", true);
 
         // write update generated files to json
         String updatedJson = objectToJson(generatedFiles);
         writeJsonFile(jsonPath, updatedJson);
-
-        // get all entries json
-//        for (String flavor : generatedFiles.keySet()) {
-//
-//            GeneratedFileEntries entries = generatedFiles.get(flavor);
-//
-//            // write generated files details to json
-//            String totalJson = FileEntriesJsonManager.objectToJson(entries.mEntries);
-//
-//            // write the json to the right flavor
-////            try {
-////
-////                // add file to filer
-////                String jsonFilePathStr = getJsonFilePath(flavor);
-////                Utils.logMessage(Diagnostic.Kind.NOTE, "Writing info json to file " + jsonFilePathStr);
-////
-////                // write json to file
-////                Path jsonFilePath = Paths.get(jsonFilePathStr);
-////                Files.createFile(jsonFilePath);
-////                Files.write(jsonFilePath, totalJson.getBytes());
-////
-////            } catch (IOException e) {
-////                Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to create info file: " + e);
-////            }
-//
-//            try {
-//
-//                // add file to filer
-//                FileObject fileObj = filer.createResource(StandardLocation.SOURCE_OUTPUT,
-//                        FileEntriesJsonManager.JSON_PACKAGE, FileEntriesJsonManager.getJsonFileName(flavor));
-//
-//                Utils.logMessage(Diagnostic.Kind.NOTE, "Writing info json to " + fileObj.getName());
-//
-//                // write json to file
-//                Writer writer = fileObj.openWriter();
-//                writer.write(totalJson);
-//                writer.flush();
-//                writer.close();
-//
-//                String originalPathStr = fileObj.getName();
-//                String targetPathStr = originalPathStr.replace(flavorFrom, flavor);
-//                Path targetPath = Paths.get(targetPathStr);
-//
-//                Utils.logMessage(Diagnostic.Kind.NOTE, "Moving info file to the right flavor " + targetPath.toString());
-//
-//                Files.createDirectories(targetPath);
-//                Files.move(Paths.get(originalPathStr), targetPath, StandardCopyOption.REPLACE_EXISTING);
-//
-//            } catch (IOException e) {
-//                Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to create info file: " + e);
-//            }
-//
-//        }
-
     }
 
 
     /* Json file path ---------------------- */
 
     private static final String ENTRIES_JSON_PATH = "/generated/assets/variantsStubsGenerator/meta/generated_files.json";
-    public static String getJsonFilePath(String buildDir) {
+    private static String getJsonFilePath(String buildDir) {
         return buildDir + ENTRIES_JSON_PATH;
 //        return ENTRIES_JSON_PATH + FileEntriesJsonManager.getJsonFileName(flavor);
     }
-
-//    public static final String JSON_PACKAGE = "variantsstubsgenerator.meta";
-//    public static String getJsonFileName(String flavor) {
-//        String JSON_FILES_NAME = "variant_generated_files";
-//        //return JSON_FILES_NAME + ".json";
-//        return JSON_FILES_NAME + "_" + flavor + ".json";
-//    }
 
 
     /* Json Handling ---------------------- */
@@ -150,32 +90,6 @@ public class FileEntriesJsonManager {
 
     private static List<GeneratedFileEntry> readJsonFile(String jsonPath) {
 
-//        // read json content
-//        try {
-//            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT,
-//                    FileEntriesJsonManager.JSON_PACKAGE, FileEntriesJsonManager.getJsonFileName(flavor));
-//            Utils.logMessage(Diagnostic.Kind.NOTE, "info file got from filer: " + fileObj.getName());
-//
-//            Reader reader = fileObj.openReader(false);
-//            BufferedReader bufferedReader = new BufferedReader(reader);
-//
-//            StringBuilder builder = new StringBuilder();
-//            String aux = "";
-//
-//            while ((aux = bufferedReader.readLine()) != null) {
-//                builder.append(aux);
-//            }
-//            bufferedReader.close();
-//            reader.close();
-//
-//            String fileContent = builder.toString();
-//            return jsonToObject(fileContent);
-//
-//        } catch (IOException e) {
-//            Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to read info file: " + e);
-//            return null;
-//        }
-
         File json = new File(jsonPath);
         if (!json.exists()) {
             return null;
@@ -205,6 +119,41 @@ public class FileEntriesJsonManager {
     }
 
 
+
+    /* Old code and drafts */
+
+    //    public static final String JSON_PACKAGE = "variantsstubsgenerator.meta";
+//    public static String getJsonFileName(String flavor) {
+//        String JSON_FILES_NAME = "variant_generated_files";
+//        //return JSON_FILES_NAME + ".json";
+//        return JSON_FILES_NAME + "_" + flavor + ".json";
+//    }
+
+    //        // read json content
+//        try {
+//            FileObject fileObj = filer.getResource(StandardLocation.SOURCE_OUTPUT,
+//                    FileEntriesJsonManager.JSON_PACKAGE, FileEntriesJsonManager.getJsonFileName(flavor));
+//            Utils.logMessage(Diagnostic.Kind.NOTE, "info file got from filer: " + fileObj.getName());
+//
+//            Reader reader = fileObj.openReader(false);
+//            BufferedReader bufferedReader = new BufferedReader(reader);
+//
+//            StringBuilder builder = new StringBuilder();
+//            String aux = "";
+//
+//            while ((aux = bufferedReader.readLine()) != null) {
+//                builder.append(aux);
+//            }
+//            bufferedReader.close();
+//            reader.close();
+//
+//            String fileContent = builder.toString();
+//            return jsonToObject(fileContent);
+//
+//        } catch (IOException e) {
+//            Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to read info file: " + e);
+//            return null;
+//        }
 
 //    public static void updateFileEntriesJson(List<String> generatedFiles) {
 //
