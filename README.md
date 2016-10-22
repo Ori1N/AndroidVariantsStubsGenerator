@@ -70,7 +70,7 @@ dependencies {
     ...
     
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.0'
-    apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.3'
+    apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.4'
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.0'
 }
 
