@@ -2,6 +2,7 @@ package com.oridev.variantsstubsgenerator.utils;
 
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 import com.oridev.variantsstubsgenerator.sample.BuildConfig;
@@ -17,7 +18,7 @@ import com.oridev.variantsstubsgenerator.sample.utils.AppConfig;
         flavorTo = AppConfig.DimenFruit.APPLE)
 public class FruitUtils {
 
-    public static String getPulpMessage(Context context) {
+    public static @Nullable String getPulpMessage(Context context) {
         return context.getString(R.string.message_orange_success);
     }
 

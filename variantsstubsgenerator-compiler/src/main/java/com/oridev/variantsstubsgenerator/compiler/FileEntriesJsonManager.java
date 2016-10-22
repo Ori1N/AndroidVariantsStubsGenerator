@@ -15,42 +15,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.processing.Filer;
 import javax.tools.Diagnostic;
 
 /**
  * Created by Ori on 03/09/2016.
  */
 public class FileEntriesJsonManager {
-
-
-    public static void updateFileEntriesJson(String buildDir, List<GeneratedFileEntry> newGeneratedFiles) {
-
-        if (newGeneratedFiles == null || newGeneratedFiles.size() == 0) {
-            return;
-        }
-
-        String jsonPath = getJsonFilePath(buildDir);
-
-        // get updated generated files (merge current json content with new generated files with no duplicates
-        List<GeneratedFileEntry> generatedFiles = readJsonFile(jsonPath);
-
-        // if there are already entries in info json
-        if (generatedFiles != null) {
-            generatedFiles.addAll(newGeneratedFiles);
-            // recreate list from set (unique)
-            Set<GeneratedFileEntry> allGeneratedFilesSet = new LinkedHashSet<>();
-            allGeneratedFilesSet.addAll(generatedFiles);
-            generatedFiles = new ArrayList<>(allGeneratedFilesSet);
-        } else {
-            generatedFiles = newGeneratedFiles;
-        }
-
-        Utils.logMessage(Diagnostic.Kind.NOTE, "generating info json with " + generatedFiles.size() + " generated files", true);
-
-        // write update generated files to json
-        String updatedJson = objectToJson(generatedFiles);
-        writeJsonFile(jsonPath, updatedJson);
-    }
 
 
     /* Json file path ---------------------- */
@@ -88,7 +59,8 @@ public class FileEntriesJsonManager {
 
     /* File actions handling */
 
-    private static List<GeneratedFileEntry> readJsonFile(String jsonPath) {
+    public static List<GeneratedFileEntry> readJsonFile(String buildDir) {
+        final String jsonPath = getJsonFilePath(buildDir);
 
         File json = new File(jsonPath);
         if (!json.exists()) {
@@ -106,17 +78,23 @@ public class FileEntriesJsonManager {
         }
     }
 
-    private static void writeJsonFile(String pathStr, String content) {
-        Path path = Paths.get(pathStr);
+    public static void writeJsonFile(List<GeneratedFileEntry> entries, String buildDir) {
+        final String jsonPath = getJsonFilePath(buildDir);
+
+        Path path = Paths.get(jsonPath);
         Path dirPath = path.getParent();
         try {
+            String content = objectToJson(entries);
+
             Files.createDirectories(dirPath);
             Files.write(path, content.getBytes());
+
         } catch (IOException e) {
             Utils.logMessage(Diagnostic.Kind.WARNING, "Failed to write info json file: " + e);
         }
 
     }
+
 
 
 

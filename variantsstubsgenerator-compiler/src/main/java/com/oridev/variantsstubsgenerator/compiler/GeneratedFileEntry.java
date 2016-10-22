@@ -14,6 +14,13 @@ public class GeneratedFileEntry {
         this.path = path;
     }
 
+    public String getFlavor() {
+        return flavor;
+    }
+    public String getPath() {
+        return path;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
