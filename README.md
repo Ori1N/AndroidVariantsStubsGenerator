@@ -25,7 +25,7 @@ class PaidFunctionality {
 ```
 
 So when executing `./gradlew assemblePaid` a stub class will be generated 
- to `app/build/generated/source/apt/free/com.example.ExtraFunctionality.java`
+ to `app/build/generated/source/apt/free/com.example.PaidFunctionality.java`
 ```java
 class PaidFunctionality {
 
@@ -34,7 +34,7 @@ class PaidFunctionality {
 }
 ```
 
-So you can call `ExtraFunctionality.someFunctionality(testX, testY)` 
+So you can call `PaidFunctionality.someFunctionality(testX, testY)` 
 from the main source set and flavor `free` will compile successfully.
 
 * Android Studio recognizes the generated files.

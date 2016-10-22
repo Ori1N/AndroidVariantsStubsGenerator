@@ -25,6 +25,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -203,8 +204,11 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
                     // create stubs for methods
                 } else if (innerElementKind == ElementKind.METHOD) {
-                    MethodSpec methodSpec = generateStubMethodObject((ExecutableElement) innerElement, throwException, qualifiedName);
-                    builder.addMethod(methodSpec);
+                    ExecutableElement method = (ExecutableElement) innerElement;
+                    if (shouldAddMethodToGeneratedClass(element, method)) {
+                        MethodSpec methodSpec = generateStubMethodObject(method, throwException, qualifiedName);
+                        builder.addMethod(methodSpec);
+                    }
 
                 } else if (innerElementKind == ElementKind.ENUM_CONSTANT) {
                     builder.addEnumConstant(innerElementName);
@@ -255,7 +259,7 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
             methodBuilder.addStatement("throw new $T($S)", AttemptToUseStubException.class, info);
 
         } else if (methodReturnType.getKind() != TypeKind.VOID) {
-            // add return statement if required
+            // add return statement if necessary
             methodBuilder.addStatement("return " + getDefaultReturnTypeForTypeMirror(methodReturnType));
         }
 
@@ -269,6 +273,10 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
         if (element.getKind().isInterface()) {
             modifierList.remove(Modifier.ABSTRACT);
+        }
+
+        if (element.getKind() == ElementKind.ENUM) {
+            modifierList.remove(Modifier.FINAL);
         }
 
         return modifierList.toArray(new Modifier[modifierList.size()]);
@@ -295,6 +303,20 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return typeNames;
     }
 
+    private boolean shouldAddMethodToGeneratedClass(TypeElement containingClass, ExecutableElement method) {
+
+        // handle enum base methods
+        if (containingClass.getKind() == ElementKind.ENUM) {
+            final String methodName = method.getSimpleName().toString();
+            if (methodName.equals("values") || methodName.equals("valueOf")) {
+                return false;
+            }
+        }
+
+        // as default return true
+        return true;
+    }
+
     private Object getDefaultReturnTypeForTypeMirror(TypeMirror type) {
         TypeName typeName = TypeName.get(type);
 
@@ -314,9 +336,10 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     /* Write file ----------------------------------------------- */
 
-    private String mExamplePath = null;
     private static final String EXAMPLE_PACKAGE = "com.example";
     private static final String EXAMPLE_NAME = "_d_";
+
+    private String mExamplePath = null;
     private String getExamplePath() {
         if (mExamplePath == null) {
 

@@ -53,5 +53,16 @@ public class FruitUtils {
         void onFinish(T response);
     }
 
+    public enum EnumType {
+        ENUM_VALUE_1,
+        ENUM_VALUE_2;
+
+        public boolean isValue1() {
+            switch (this) {
+                case ENUM_VALUE_1: return true;
+                default: return false;
+            }
+        }
+    }
 
 }
