@@ -5,7 +5,7 @@
 
     <groupId>com.oridev.variantsstubsgenerator</groupId>
     <artifactId>variantsstubsgenerator-compiler</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3</version>
 
   <build>
     <plugins>

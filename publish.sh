@@ -3,7 +3,7 @@
 # set jdk 7
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.7.0_79.jdk/Contents/Home
 
-MODULE="$1"
+MODULE=variantsstubsgenerator-"$1"
 VERSION="$2"
 
 # clean and build module
