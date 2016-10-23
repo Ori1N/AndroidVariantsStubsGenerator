@@ -1,6 +1,7 @@
 package com.oridev.variantsstubsgenerator.compiler;
 
 import com.google.auto.service.AutoService;
+import com.google.common.collect.Sets;
 import com.oridev.variantsstubsgenerator.Utils;
 import com.oridev.variantsstubsgenerator.annotation.GeneratedVariantStub;
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
@@ -71,13 +72,13 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return types;
     }
 
-    private static final String OPTION_VARIANT = "variantName";
-    @Override
-    public Set<String> getSupportedOptions() {
-        Set<String> options = new LinkedHashSet<>();
-        options.add(OPTION_VARIANT);
-        return options;
-    }
+//    private static final String OPTION_VARIANT = "variantName";
+//    @Override
+//    public Set<String> getSupportedOptions() {
+//        Set<String> options = new LinkedHashSet<>();
+//        options.add(OPTION_VARIANT);
+//        return options;
+//    }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -105,10 +106,10 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
                 final String flavorTo = annotation.flavorTo();
 
                 try {
-                    String basePath = getSourceSetPath(flavorTo);
-                    writeSourceFile(file, basePath);
+                    String sourceSetPath = getSourceSetPath(flavorTo);
+                    writeSourceFile(file, sourceSetPath);
 
-                    String path = getPathForFile(file, flavorTo);
+                    String path = getPathForFile(sourceSetPath, file);
                     if (path != null) {
                         generatedFiles.add(new GeneratedFileEntry(flavorTo, path));
                     }
@@ -127,8 +128,6 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         for (Element element : roundEnv.getElementsAnnotatedWith(GeneratedVariantStub.class)) {
             //addSourceFileToFiler();
         }
-
-
         //addFileEntriesToFiler();
 
         return true;
@@ -376,6 +375,17 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
 
     /* Write file ----------------------------------------------- */
 
+    private void writeSourceFile(JavaFile javaFile, String path) {
+        Utils.logMessage(Diagnostic.Kind.NOTE, "Writing file [" + javaFile.packageName + "." +
+                javaFile.typeSpec.name + "] sourceSetPath [" + path + "]", true);
+
+        try {
+            javaFile.writeTo(new File(path));
+        } catch (Exception e) {
+            Utils.logMessage(Diagnostic.Kind.WARNING, "Error writing file " + javaFile.typeSpec.name + ": " + e);
+        }
+    }
+
     private static final String EXAMPLE_PACKAGE = "com.example";
     private static final String EXAMPLE_NAME = "_d_";
 
@@ -401,7 +411,42 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
         return mExamplePath;
     }
 
+    private String getSourceSetPath(String flavorTo) {
+        final String examplePath = getExamplePath();
+
+        final String currentVariant = getCurrentVariant(examplePath);
+        final String currentBuildType = getCurrentBuildType(examplePath, currentVariant);
+
+        String currentSourceSetPath = BUILD_RELATIVE_PATH + currentVariant + "/" + currentBuildType;
+        String fullPath;
+
+        if (!BUILD_TYPES.contains(flavorTo)) {
+            // if flavorTo is a flavor
+            fullPath = examplePath
+                    // set path to flavorTo for current buildType
+                    .replace(currentSourceSetPath, BUILD_RELATIVE_PATH + flavorTo + "/" + currentBuildType);
+        } else {
+            // if flavorTo is a buildType
+            fullPath = examplePath
+                    // set path to main sourceSet for desired buildType
+                    .replace(currentSourceSetPath, BUILD_RELATIVE_PATH + "main" + "/" + flavorTo);
+        }
+
+        // remove package and file from path
+        return fullPath.substring(0, fullPath.indexOf(EXAMPLE_PACKAGE.replaceAll("\\.", "/")));
+    }
+
+    private String getPathForFile(String sourceSetPath, JavaFile javaFile) {
+        return sourceSetPath + javaFile.packageName.replaceAll("\\.", "/")
+                + "/" + javaFile.typeSpec.name + ".java";
+    }
+
+
+    /* Path manipulation */
+
     private static final String BUILD_RELATIVE_PATH = "generated/source/apt/";
+
+    private Set<String> BUILD_TYPES = Sets.newHashSet("debug", "release");
 
     private String getBuildDir() {
         String examplePath = getExamplePath();
@@ -409,54 +454,16 @@ public class VariantsStubsGeneratorAnnotationProcessor extends AbstractProcessor
     }
 
     private String getCurrentVariant(String examplePath) {
-        String relativePath = examplePath.substring(examplePath.indexOf(BUILD_RELATIVE_PATH) + BUILD_RELATIVE_PATH.length());
-        return relativePath.substring(0, relativePath.indexOf('/'));
+        String strStartingWithVariant = examplePath.substring(examplePath.indexOf(BUILD_RELATIVE_PATH) + BUILD_RELATIVE_PATH.length());
+        return strStartingWithVariant.substring(0, strStartingWithVariant.indexOf('/'));
     }
 
-    private String getSourceSetPath(String flavorTo) {
-
-        final String examplePath = getExamplePath();
-
-        /* fix for multiple dimensions projects */
-        String currentVariant = getCurrentVariant(examplePath);
-
-        // get the desired target path
-        String fullPath = examplePath
-                // set path to flavorTo
-                .replace(BUILD_RELATIVE_PATH + currentVariant, BUILD_RELATIVE_PATH + flavorTo);
-
-        // remove package and file from path
-        return fullPath.substring(0, fullPath.indexOf(EXAMPLE_PACKAGE.replaceAll("\\.", "/")));
+    private String getCurrentBuildType(String examplePath, String currentFlavor) {
+        String buildRelativePathWithVariant = BUILD_RELATIVE_PATH + currentFlavor + "/";
+        String strStartingWithBuildType = examplePath.substring(examplePath.indexOf(buildRelativePathWithVariant) + buildRelativePathWithVariant.length());
+        return strStartingWithBuildType.substring(0, strStartingWithBuildType.indexOf('/'));
     }
 
-    private String getPathForFile(JavaFile javaFile, String flavorTo) {
-
-        final String examplePath = getExamplePath();
-
-        /* fix for multiple dimensions projects */
-        String currentFlavor = examplePath.substring(examplePath.indexOf(BUILD_RELATIVE_PATH) + BUILD_RELATIVE_PATH.length());
-        currentFlavor = currentFlavor.substring(0, currentFlavor.indexOf('/'));
-
-        // get the desired target path
-        return examplePath
-                // set path to flavorTo
-                .replace(BUILD_RELATIVE_PATH + currentFlavor, BUILD_RELATIVE_PATH + flavorTo)
-                // set file package
-                .replace(EXAMPLE_PACKAGE.replaceAll("\\.", "/"), javaFile.packageName.replaceAll("\\.", "/"))
-                // set file name
-                .replace("/" + EXAMPLE_NAME, "/" + javaFile.typeSpec.name);
-    }
-
-    private void writeSourceFile(JavaFile javaFile, String path) {
-        Utils.logMessage(Diagnostic.Kind.NOTE, "Writing file [" + javaFile.packageName + "." +
-                javaFile.typeSpec.name + "] sourceSetPath [" + path + "]", true);
-
-        try {
-            javaFile.writeTo(new File(path));
-        } catch (Exception e) {
-            Utils.logMessage(Diagnostic.Kind.WARNING, "Error copying file " + javaFile.typeSpec.name + ": " + e);
-        }
-    }
 
 
     /* Info Json --------------------------------------- */

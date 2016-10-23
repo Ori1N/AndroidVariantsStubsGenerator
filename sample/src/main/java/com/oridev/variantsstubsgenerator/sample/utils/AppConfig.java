@@ -6,6 +6,14 @@ package com.oridev.variantsstubsgenerator.sample.utils;
 
 public class AppConfig {
 
+    public interface BuildTypes {
+
+        String DEBUG = "debug";
+
+        String RELEASE = "release";
+
+    }
+
     public interface DimenFruit {
 
         String ORANGE = "orange";
