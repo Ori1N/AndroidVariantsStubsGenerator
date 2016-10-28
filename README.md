@@ -77,3 +77,8 @@ dependencies {
 apply plugin: 'variantsstubsgenerator'
 
 ```
+
+If you are using proguard you should also add the following configuration to your proguard rules:
+```proguard
+-dontwarn com.oridev.variantsstubsgenerator.plugin.**
+```
