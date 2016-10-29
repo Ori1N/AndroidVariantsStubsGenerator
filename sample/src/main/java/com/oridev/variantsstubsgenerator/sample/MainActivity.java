@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 
 
-import com.oridev.variantsstubsgenerator.utils.FruitUtils;
+import com.oridev.variantsstubsgenerator.sample.utils.PaidFunctionality;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private void showFlavor1Message() {
 
         // get some text from flavor1
-        String message1 = FruitUtils.getPulpMessage(this);
+        String message1 = PaidFunctionality.getPaidMessage(this);
         /* It's ok if the IDE complains about this condition always being false (if your're
            on flavor orange) or always true (if your'e on flavor apple) */
         if (message1 == null) {

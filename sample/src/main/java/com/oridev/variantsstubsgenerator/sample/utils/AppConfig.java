@@ -14,12 +14,19 @@ public class AppConfig {
 
     }
 
-    public interface DimenFruit {
+    public interface DimenUser {
 
-        String ORANGE = "orange";
+        String FREE = "free";
 
-        String APPLE = "apple";
+        String PAID = "paid";
 
     }
+//    public interface DimenFruit {
+//
+//        String ORANGE = "orange";
+//
+//        String APPLE = "apple";
+//
+//    }
 
 }

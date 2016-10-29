@@ -1,4 +1,4 @@
-package com.oridev.variantsstubsgenerator.utils;
+package com.oridev.variantsstubsgenerator.sample.utils;
 
 
 import android.content.Context;
@@ -15,27 +15,32 @@ import com.oridev.variantsstubsgenerator.sample.utils.AppConfig;
  */
 @RequiresVariantStub(
         // flavorTo is the flavor we want stubs to be generated to.
-        flavorTo = AppConfig.DimenFruit.APPLE)
-public class FruitUtils {
+        flavorTo = AppConfig.DimenUser.FREE)
+public class PaidFunctionality {
 
-    public static @Nullable String getPulpMessage(Context context) {
+    public static @Nullable String getPaidMessage(Context context) {
         return context.getString(R.string.message_orange_success);
     }
 
+
+    /* Additional examples of library usage... */
+
+    // For each public method in annotated class, a stub method will be generated
     public static int publicMethod(int x, float y) {
-        return 0;
-        // For each public method in annotated class, a stub method will be generated
+        // Return a random number.
+        // In the generated stub the return value will be the default for number primitives - 0
+        return Double.valueOf(Math.random()).intValue();
     }
 
-    private static void privateMethod(int x) {
-        // For private methods stubs are not necessary
-    }
+    // For private methods stubs are not necessary
+    private static void privateMethod(int x) { }
 
-
+    // Stubs will also be generated for inner classes
     public class InnerClass {
 
     }
 
+    // Support for generic types
     public interface GenericInnerInterface<T> {
 
         /**
@@ -54,6 +59,7 @@ public class FruitUtils {
         void onFinish(T response);
     }
 
+    // The stubs for enums will contain the enum constants and public methods
     public enum EnumType {
         ENUM_VALUE_1,
         ENUM_VALUE_2;

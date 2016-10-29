@@ -34,11 +34,6 @@ android {
     }
 
 
-//    compileOptions {
-//        sourceCompatibility = JavaVersion.VERSION_1_7
-//        targetCompatibility = JavaVersion.VERSION_1_7
-//    }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -50,20 +45,20 @@ android {
 
     productFlavors {
 
-//        free {
-//            dimension 'dimenUserType'
-//        }
-//        paid {
-//            dimension 'dimenUserType'
-//        }
-
-        orange {
-            dimension 'dimenFruit'
+        free {
+            dimension 'dimenUserType'
         }
-        apple {
-            dimension 'dimenFruit'
+        paid {
+            dimension 'dimenUserType'
         }
 
+//        orange {
+//            dimension 'dimenFruit'
+//        }
+//        apple {
+//            dimension 'dimenFruit'
+//        }
+//
     }
 }
 
@@ -77,13 +72,13 @@ dependencies {
 
     // for debug, use module dependencies
     debugCompile project(':variantsstubsgenerator-annotation')
-    debugCompile project(':variantsstubsgenerator-plugin')
+    //debugCompile project(':variantsstubsgenerator-plugin')
     // for release, use published dependencies
-    releaseCompile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.0'
-    releaseCompile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.0'
+    releaseCompile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.5'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.5'
 
     apt project(':variantsstubsgenerator-compiler')
-    //apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.3'
+    //apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.5'
 
     compile 'com.jakewharton:butterknife:8.2.1'
     apt 'com.jakewharton:butterknife-compiler:8.2.1'

@@ -4,7 +4,8 @@
 The annotation processor module.
 
 Generates a stub java file for each annotated class, containing all the public elements of the annotated class.
-The files are generated into their target flavors / build-types.
+The files are generated into their target path according to their flavors / build-types.
+(For example: `app/build/generated/source/apt/debug/free/com.example`
 
 Additionally, an info json is created containing the target-flavor and file-path for each generated file.
 The json is created to `app/build/generated/assets/variantsStubsGenerator/meta/generated_files.json`.
