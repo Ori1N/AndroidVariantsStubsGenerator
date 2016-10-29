@@ -49,7 +49,8 @@ that building both variants in the same command **won't work!**:
 ./gradlew assemblePaidDebug assembleFreeDebug
 ```
 - If you see the following warning on build, that's normal, and should be ignored:
-`warning: Unclosed files for the types '[com.example._d_]'; these types will not undergo annotation processing`
+<br/>`warning: Unclosed files for the types '[com.example._d_]'; these types will not undergo annotation processing`
+
 
 
 Download
