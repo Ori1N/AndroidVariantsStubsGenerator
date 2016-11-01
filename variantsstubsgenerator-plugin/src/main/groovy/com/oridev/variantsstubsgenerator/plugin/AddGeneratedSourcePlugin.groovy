@@ -29,8 +29,9 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
 
                     if (!variantPaths.isEmpty()) {
 
-                        logMessage("applying AddGeneratedSourcePlugin for variant $variant.name with $variantPaths.size entries)..", true);
+                        logMessage("applying AddGeneratedSourcePlugin for variant $variant.name with $variantPaths.size entries)..");
                         variantPaths.each { path ->
+                            logMessage("AddGeneratedSourcePlugin variant [$variant.name] adding path [$path]", true);
                             variant.javaCompile.source path;
                         }
                     }
