@@ -27,6 +27,7 @@ class PaidFunctionality {
 So when executing `./gradlew assemblePaidDebug` a stub class will be generated 
  to `app/build/generated/source/apt/debug/free/com.oridev.variantsstubsgenerator.sample.utils.PaidFunctionality.java`
 ```java
+// Generated stub. Do not modify!
 class PaidFunctionality {
 
   public void getPaidMEssage(Context context) {
