@@ -41,13 +41,9 @@ from the main source set and flavor `free` will compile successfully.
 * Android Studio recognizes the generated files.
 
 Usage notes:
-- The library's gradle plugin must be applied after building the variant containing generating
-elements before the variant containing the generated elements can be built successfully, meaning 
-that building both variants in the same command **won't work!**:
-```groovy
-// won't work in the same command!!
-./gradlew assemblePaidDebug assembleFreeDebug
-```
+- The variant containing generating elements must be compiled first so 
+ the annotation processor will be invoked and generate the files.
+ In our example it means that `assemblePaid` must be called for `assembleFree` to succeed.
 - If you see the following warning on build, that's normal, and should be ignored:
 <br/>`warning: Unclosed files for the types '[com.example._d_]'; these types will not undergo annotation processing`
 
@@ -67,7 +63,7 @@ buildscript {
     ...
   
     classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.5'
+    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.6'
   }
 }
 ```
@@ -83,7 +79,7 @@ dependencies {
     
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.5'
     apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.5'
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.5'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.6'
 }
 
 apply plugin: 'variantsstubsgenerator'
