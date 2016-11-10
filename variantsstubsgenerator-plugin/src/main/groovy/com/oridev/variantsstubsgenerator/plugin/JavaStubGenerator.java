@@ -55,7 +55,7 @@ public class JavaStubGenerator {
 //        }
 //    }
 
-
+// module
     private File mOriginalFile = null;
     private JavaType<?> mOriginalSource = null;
     private AnnotationSource<?> mAnnotation = null;

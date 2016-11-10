@@ -1,1 +1,1 @@
-include ':sample', ':variantsstubsgenerator-compiler', ':variantsstubsgenerator-annotation', ':variantsstubsgenerator-plugin'
+include ':sample', ':variantsstubsgenerator-annotation', ':variantsstubsgenerator-plugin'
