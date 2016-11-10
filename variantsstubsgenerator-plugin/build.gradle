@@ -5,6 +5,14 @@ targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
     compile gradleApi()
+
+    // compile the annotation
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.5'
+
+    // parse and write java code
+    compile 'org.jboss.forge.roaster:roaster-api:2.19.1.Final'
+    compile 'org.jboss.forge.roaster:roaster-jdt:2.19.1.Final'
+
 }
 
 apply from: '../artifacts.gradle'
