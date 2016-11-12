@@ -34,7 +34,7 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
     void addSourceSetsForFlavor(def project, def flavor) {
         String sourceSetPath = PathsUtils.getTargetSourceSetPath(project.buildDir.getPath(), flavor.name);
         if (new File(sourceSetPath).isDirectory()) {
-            Utils.logMessage("Adding existing directory [$sourceSetPath] to sourceSet [$flavor.name]");
+            Utils.logMessage("Adding existing sourceDir [$sourceSetPath] to sourceSet [$flavor.name]", true);
             addPathToSourceSet(project, flavor.name, sourceSetPath + "/");
         }
     }
@@ -87,7 +87,7 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
                 variant.buildType.name.equals(annotationFlavorTo)) {
             String path = generator.generateStubSourceFile();
 
-            Utils.logMessage("Adding generated source [$path]...");
+            Utils.logMessage("Adding generated source [$path]..", true);
 
             // add generated file to sourcePath
             variant.javaCompile.source path;

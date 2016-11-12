@@ -7,7 +7,7 @@ package com.oridev.variantsstubsgenerator.plugin;
 public class Utils {
 
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     static void logMessage(String msg) {
         logMessage(msg, false);
     }
