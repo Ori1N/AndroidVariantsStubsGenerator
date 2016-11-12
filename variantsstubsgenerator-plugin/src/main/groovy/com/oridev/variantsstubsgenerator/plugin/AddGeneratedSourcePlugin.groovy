@@ -10,7 +10,7 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        //addSourceSetsForFlavors(project);
+        addSourceSetsForFlavors(project);
         generateFilesBeforeCompile(project);
     }
 

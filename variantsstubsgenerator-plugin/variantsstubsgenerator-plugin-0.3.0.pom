@@ -5,7 +5,7 @@
 
     <groupId>com.oridev.variantsstubsgenerator</groupId>
     <artifactId>variantsstubsgenerator-plugin</artifactId>
-    <version>0.2.6</version>
+    <version>0.3.0</version>
 
   <build>
     <plugins>
@@ -25,19 +25,19 @@
         <dependency>
             <groupId>com.oridev.variantsstubsgenerator</groupId>
             <artifactId>variantsstubsgenerator-annotation</artifactId>
-            <version>0.2.5</version>
+            <version>0.3.0</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
           <groupId>org.jboss.forge.roaster</groupId>
           <artifactId>roaster-api</artifactId>
-          <version>${version.roaster}</version>
+          <version>2.19.1.Final</version>
         </dependency>
         <dependency>
           <groupId>org.jboss.forge.roaster</groupId>
           <artifactId>roaster-jdt</artifactId>
-          <version>${version.roaster}</version>
+          <version>2.19.1.Final</version>
           <scope>runtime</scope>
         </dependency>
     </dependencies>

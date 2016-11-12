@@ -1,21 +1,28 @@
 package com.oridev.variantsstubsgenerator.plugin;
 
 
-import org.gradle.internal.impldep.com.google.common.collect.Sets;
+import com.oridev.variantsstubsgenerator.annotation.GeneratedVariantStub;
+import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
+
 import org.jboss.forge.roaster.Roaster;
+import org.jboss.forge.roaster.model.Annotation;
 import org.jboss.forge.roaster.model.JavaType;
+import org.jboss.forge.roaster.model.Type;
 import org.jboss.forge.roaster.model.source.AnnotationSource;
+import org.jboss.forge.roaster.model.source.AnnotationTargetSource;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
+import org.jboss.forge.roaster.model.source.JavaEnumSource;
 import org.jboss.forge.roaster.model.source.JavaInterfaceSource;
+import org.jboss.forge.roaster.model.source.JavaSource;
+import org.jboss.forge.roaster.model.source.MethodHolderSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
+import org.jboss.forge.roaster.model.source.TypeHolderSource;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
 
 
 /**
@@ -27,7 +34,12 @@ public class JavaStubGenerator {
 
 
     public String getAnnotationFlavorTo() {
-        return mAnnotation.getStringValue("flavorTo");
+        Annotation annotation = mOriginalSource.getAnnotation(RequiresVariantStub.class);
+        if (annotation != null) {
+            return annotation.getStringValue("flavorTo");
+//        return mAnnotation.getStringValue("flavorTo");
+        }
+        return null;
     }
 
     public String generateStubSourceFile() {
@@ -42,23 +54,8 @@ public class JavaStubGenerator {
         }
     }
 
-//    public static String generateStubSourceFile(File originalFile) {
-//
-//        try {
-//            JavaStubGenerator generator = new JavaStubGenerator(originalFile);
-//            File targetFile = generator.generateJavaStubFile();
-//            return targetFile.getPath();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
-
-// module
     private File mOriginalFile = null;
     private JavaType<?> mOriginalSource = null;
-    private AnnotationSource<?> mAnnotation = null;
 
     public JavaStubGenerator(File originalFile) {
         mOriginalFile = originalFile;
@@ -67,7 +64,6 @@ public class JavaStubGenerator {
         } catch (FileNotFoundException e) {
             throw new IllegalArgumentException("JavaStubGenerator Invalid param originalFile [" + originalFile + "]", e);
         }
-        mAnnotation = ((JavaClassSource) mOriginalSource).getAnnotation("RequiresVariantStub");
     }
 
 
@@ -79,9 +75,14 @@ public class JavaStubGenerator {
             throw new IOException("Failed to create directory " + targetPath);
         }
 
-        File targetFile = new File(targetDir, mOriginalFile.getName());
+        JavaType<?> generatedSource = generateStubSource(mOriginalSource);
 
-        String generatedContent = mOriginalSource.toString();
+        File targetFile = new File(targetDir, generatedSource.getName() + ".java");
+
+        String generatedContent = generatedSource.toString();
+
+        //Utils.logMessage("*** Writing generated content:\n" + generatedContent);
+
         Files.write(Paths.get(targetFile.toURI()), generatedContent.getBytes());
 
         return targetFile;
@@ -109,46 +110,96 @@ public class JavaStubGenerator {
 
 
 
-
     /* Java Source Generation ------------- */
 
     private static JavaType<?> generateStubSource(JavaType<?> originalSource) {
 
-        JavaType<?> generatedSource = null;
+        replaceLibraryAnnotationFromSource((AnnotationTargetSource) originalSource);
+        handleTypeSource(originalSource);
+        return originalSource;
+    }
 
-        if (originalSource.isClass()) {
-            generatedSource = buildStubClass((JavaClassSource) originalSource);
+    private static <T extends JavaSource<T>> void replaceLibraryAnnotationFromSource(AnnotationTargetSource source) {
 
-        } else if (originalSource.isInterface()) {
-            generatedSource = buildStubInterface((JavaInterfaceSource) originalSource);
+        // remove annotation RequiresVariantStub annotation
+        Annotation<?> annotationSource = source.getAnnotation(RequiresVariantStub.class);
+        source.removeAnnotation(annotationSource);
 
-        } else if (originalSource.isEnum()) {
-            // todo!
-            Utils.logMessage("Enum types currently not supported... :(");
+        // add GeneratedVariantStubAnnotation
+        source.addAnnotation(GeneratedVariantStub.class);
+    }
 
-        } else if (originalSource.isAnnotation()) {
-            // todo!
-            Utils.logMessage("Annotation types currently not supported... :(");
+    private static void handleTypeSource(JavaType<?> source) {
+        if (source.isClass()) {
+            JavaClassSource classSource = (JavaClassSource) source;
+
+            handleSourceMethods(classSource);
+            handleSourceNestedTypes(classSource);
+
+        } else if (source.isInterface()) {
+            // interface cannot contain non-public elements, leave as is
+            handleSourceNestedTypes((JavaInterfaceSource) source);
+
+        } else if (source.isEnum()) {
+            handleSourceMethods((JavaEnumSource) source);
+
+        } else if (source.isAnnotation()) {
         }
 
-        return generatedSource;
     }
 
 
-    private static JavaClassSource buildStubClass(JavaClassSource originalClass) {
+    private static <T extends JavaSource<T>> void handleSourceMethods(MethodHolderSource<T> source) {
 
-        for (MethodSource<?> method : originalClass.getMethods()) {
+        // handle source methods
+        for (MethodSource<T> method : source.getMethods()) {
 
-            if (method.isPublic()) {
-//                originalClass.removeMethod(method);
+            if (!method.isPublic()) {
+                // remove non public methods
+                source.removeMethod(method);
+            } else {
+                Type<?> returnType = method.getReturnType();
+                String methodBody;
+                if (returnType.getName().equals("void")) {
+                    methodBody = "";
+                } else {
+                    String returnValue = getReturnStringValue(returnType);
+                    methodBody = "return " + returnValue + ";";
+                }
+                method.setBody(methodBody);
             }
         }
 
-        return null;
+
+
     }
-    private static JavaInterfaceSource buildStubInterface(JavaInterfaceSource originalSource) {
-        // todo!
-        return null;
+
+    private static <T extends JavaSource<T>> void handleSourceNestedTypes(TypeHolderSource<T> source) {
+        for (JavaSource<?> innerType : source.getNestedTypes()) {
+            handleTypeSource(innerType);
+        }
+    }
+
+
+    private static String getReturnStringValue(Type<?> returnType) {
+
+        final String returnTypeName = returnType.getName();
+        String returnTypeStr;
+
+        if (returnType.isPrimitive()) {
+            if (returnTypeName.equals("boolean")) {
+                // for boolean returnType return false
+                returnTypeStr = "false";
+            } else {
+                // for other primitive types return 0
+                returnTypeStr = "0";
+            }
+        } else {
+            // for non primitive types return null
+            returnTypeStr = "null";
+        }
+
+        return returnTypeStr;
     }
 
 

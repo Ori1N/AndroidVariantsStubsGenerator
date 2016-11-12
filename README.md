@@ -53,7 +53,7 @@ Usage notes:
 Download
 --------
 
-Configure your project-level `build.gradle` to include the following plugins:
+Configure your project-level `build.gradle` to include the plugin:
 
 ```groovy
 buildscript {
@@ -63,7 +63,6 @@ buildscript {
   dependencies {
     ...
   
-    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
     classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.6'
   }
 }
@@ -79,7 +78,6 @@ dependencies {
     ...
     
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.5'
-    apt 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-compiler:0.2.5'
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.6'
 }
 
