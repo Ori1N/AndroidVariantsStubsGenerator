@@ -65,7 +65,7 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
         def rootSourceDir = new File(project.projectDir, "src");
         for (sourceDir in rootSourceDir.listFiles()) {
 
-            if (shouldScanSourceDir(variant, sourceDir)) {
+            if (shouldScanSourceDir(project, variant, sourceDir)) {
                 // scan sourceSets that may contain generating code
                 Utils.logMessage("Scanning sourceDir: [$sourceDir]")
                 sourceDir.eachFileRecurse { file ->
@@ -95,7 +95,11 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
     }
 
 
-    boolean shouldScanSourceDir(def variant, def sourceDir) {
+    boolean shouldScanSourceDir(Project project, def variant, File sourceDir) {
+
+        if (!sourceDir.isDirectory()) {
+            return false;
+        }
 
         final String MAIN = "main";
         final String TEST = "test";

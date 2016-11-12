@@ -63,7 +63,7 @@ buildscript {
   dependencies {
     ...
   
-    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.6'
+    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.3.2'
   }
 }
 ```
@@ -78,7 +78,7 @@ dependencies {
     ...
     
     compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.5'
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.2.6'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.3.2'
 }
 
 apply plugin: 'variantsstubsgenerator'
