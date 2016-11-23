@@ -13,6 +13,10 @@ dependencies {
     compile 'org.jboss.forge.roaster:roaster-api:2.19.1.Final'
     compile 'org.jboss.forge.roaster:roaster-jdt:2.19.1.Final'
 
+    compile 'com.squareup:javapoet:1.8.0'
+//    compile 'org.apache.maven.plugins:maven-checkstyle-plugin:2.17'
+//    compile 'org.apache.maven.plugins:maven-pmd-plugin:3.7'
+
 }
 
 apply from: '../artifacts.gradle'

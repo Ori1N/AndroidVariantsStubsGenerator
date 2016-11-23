@@ -5,11 +5,11 @@ import com.oridev.variantsstubsgenerator.annotation.GeneratedVariantStub;
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
 
 import org.jboss.forge.roaster.Roaster;
-import org.jboss.forge.roaster.model.Annotation;
 import org.jboss.forge.roaster.model.JavaType;
 import org.jboss.forge.roaster.model.Type;
 import org.jboss.forge.roaster.model.source.AnnotationSource;
 import org.jboss.forge.roaster.model.source.AnnotationTargetSource;
+import org.jboss.forge.roaster.model.source.Import;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.JavaEnumSource;
 import org.jboss.forge.roaster.model.source.JavaInterfaceSource;
@@ -21,6 +21,7 @@ import org.jboss.forge.roaster.model.source.TypeHolderSource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -34,7 +35,7 @@ public class JavaStubGenerator {
 
 
     public String getAnnotationFlavorTo() {
-        Annotation annotation = mOriginalSource.getAnnotation(RequiresVariantStub.class);
+        AnnotationSource annotation = (AnnotationSource) mSource.getAnnotation(RequiresVariantStub.class);
         if (annotation != null) {
             return annotation.getStringValue("flavorTo");
 //        return mAnnotation.getStringValue("flavorTo");
@@ -55,14 +56,20 @@ public class JavaStubGenerator {
     }
 
     private File mOriginalFile = null;
-    private JavaType<?> mOriginalSource = null;
+    private JavaType<?> mSource = null;
 
     public JavaStubGenerator(File originalFile) {
         mOriginalFile = originalFile;
         try {
-            mOriginalSource = Roaster.parse(originalFile);
+            Utils.logMessage("Parsing file " + originalFile.getPath());
+            mSource = Roaster.parse(originalFile);
+            Roaster.format(originalFile.getPath());
+
         } catch (FileNotFoundException e) {
             throw new IllegalArgumentException("JavaStubGenerator Invalid param originalFile [" + originalFile + "]", e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error parsing file " + originalFile.getName(), e);
         }
     }
 
@@ -75,7 +82,7 @@ public class JavaStubGenerator {
             throw new IOException("Failed to create directory " + targetPath);
         }
 
-        JavaType<?> generatedSource = generateStubSource(mOriginalSource);
+        JavaType<?> generatedSource = generateStubSource(mSource);
 
         File targetFile = new File(targetDir, generatedSource.getName() + ".java");
 
@@ -90,7 +97,7 @@ public class JavaStubGenerator {
 
     private String getTargetPath() {
         String targetFlavor = getAnnotationFlavorTo();
-        String sourcePackage = mOriginalSource.getPackage().replace('.', '/'); // .replaceAll("\\.", "/")
+        String sourcePackage = mSource.getPackage().replace('.', '/'); // .replaceAll("\\.", "/")
 
         String buildDir = getBuildDir(mOriginalFile.getPath(), sourcePackage);
         String targetSourceSet = PathsUtils.getTargetSourceSetPath(buildDir, targetFlavor);
@@ -114,19 +121,36 @@ public class JavaStubGenerator {
 
     private static JavaType<?> generateStubSource(JavaType<?> originalSource) {
 
-        replaceLibraryAnnotationFromSource((AnnotationTargetSource) originalSource);
+        replaceLibraryAnnotationFromSource((JavaSource) originalSource);
         handleTypeSource(originalSource);
+        removeImportsUsingRoaster((JavaSource) originalSource);
+
         return originalSource;
     }
 
-    private static <T extends JavaSource<T>> void replaceLibraryAnnotationFromSource(AnnotationTargetSource source) {
+    private static void replaceLibraryAnnotationFromSource(AnnotationTargetSource source) {
 
         // remove annotation RequiresVariantStub annotation
-        Annotation<?> annotationSource = source.getAnnotation(RequiresVariantStub.class);
+        AnnotationSource annotationSource = source.getAnnotation(RequiresVariantStub.class);
         source.removeAnnotation(annotationSource);
 
         // add GeneratedVariantStubAnnotation
         source.addAnnotation(GeneratedVariantStub.class);
+    }
+
+    private static void removeImportsUsingRoaster(JavaSource<?> source) {
+        final String sourceContent = source.toString();
+
+        for (Import importObj : source.getImports()) {
+            String importClassName = importObj.getSimpleName();
+
+            String contentAfterImport = sourceContent.substring(sourceContent.indexOf(importClassName) + importClassName.length());
+            // if the source doesn'
+            if (!contentAfterImport.contains(importClassName)) {
+                source.removeImport(importObj);
+            }
+
+        }
     }
 
     private static void handleTypeSource(JavaType<?> source) {
@@ -144,8 +168,8 @@ public class JavaStubGenerator {
             handleSourceMethods((JavaEnumSource) source);
 
         } else if (source.isAnnotation()) {
+            // todo?
         }
-
     }
 
 
@@ -202,6 +226,96 @@ public class JavaStubGenerator {
         return returnTypeStr;
     }
 
+    private static String formatSource(File source) {
+        //String formattedGeneratedSource = Roaster.format(source);
+
+//        FileContents sourceContent = new FileContents()
+//        try {
+//            DetailAST walker = TreeWalker.(sourceContent);
+//            walker.
+//        } catch (RecognitionException | TokenStreamException e) {
+//            e.printStackTrace();
+//        }
+//        UnusedImportsCheck check = new UnusedImportsCheck() {
+//
+//        };
+
+//        TypeSpec helloWorld = TypeSpec.classBuilder("HelloWorld")
+//                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+//                .addMethod(main)
+//                .build();
+//
+//        JavaFile javaFile = JavaFile.Builder
+//                .build();
+//
+//        javaFile.writeTo(System.out);
+
+
+        return null;
+    }
+
+    public static String removeComments(String code) {
+        StringBuilder newCode = new StringBuilder();
+        StringReader reader = null;
+        try {
+            reader = new StringReader(code);
+            boolean inBlockComment = false;
+            boolean inLineComment = false;
+            boolean out = true;
+
+            int prev = reader.read();
+            int cur;
+            for(cur = reader.read(); cur != -1; cur = reader.read()) {
+                if(inBlockComment) {
+                    if (prev == '*' && cur == '/') {
+                        inBlockComment = false;
+                        out = false;
+                    }
+                } else if (inLineComment) {
+                    if (cur == '\r') { // start untested block
+                        reader.mark(1);
+                        int next = reader.read();
+                        if (next != '\n') {
+                            reader.reset();
+                        }
+                        inLineComment = false;
+                        out = false; // end untested block
+                    } else if (cur == '\n') {
+                        inLineComment = false;
+                        out = false;
+                    }
+                } else {
+                    if (prev == '/' && cur == '*') {
+                        reader.mark(1); // start untested block
+                        int next = reader.read();
+                        if (next != '*') {
+                            inBlockComment = true; // tested line (without rest of block)
+                        }
+                        reader.reset(); // end untested block
+                    } else if (prev == '/' && cur == '/') {
+                        inLineComment = true;
+                    } else if (out){
+                        newCode.append((char)prev);
+                    } else {
+                        out = true;
+                    }
+                }
+                prev = cur;
+            }
+            if (prev != -1 && out && !inLineComment) {
+                newCode.append((char)prev);
+            }
+        } catch (IOException e) {
+            Utils.logMessage("JavaStubGenerator error removing source comments: " + e, true);
+        } finally {
+            if (reader != null) {
+                reader.close();
+            }
+        }
+
+        return newCode.toString();
+    }
+
 
 
 
@@ -218,7 +332,7 @@ public class JavaStubGenerator {
 
 
 
-    /* JavaFile object generation -------------------------------- */
+    /* JavaPoet object generation -------------------------------- */
 //    private JavaFile generateStubJavaFile(CompilationUnit element) {
 //        TypeDeclaration type = getPublicTypeFromCompilationUnit(element);
 //

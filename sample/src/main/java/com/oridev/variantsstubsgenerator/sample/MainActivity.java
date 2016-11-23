@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         // get some text from flavor1
         String message1 = PaidFunctionality.getPaidMessage(this);
         /* It's ok if the IDE complains about this condition always being false (if your're
-           on flavor orange) or always true (if your'e on flavor apple) */
+           on flavor free) or always true (if your'e on flavor paid) */
         if (message1 == null) {
             // this means we called flavor1 method from flavor2
             message1 = getString(R.string.message_flavor1_failure);

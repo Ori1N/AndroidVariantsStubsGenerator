@@ -4,9 +4,8 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 
 import com.oridev.variantsstubsgenerator.annotation.RequiresVariantStub;
-import com.oridev.variantsstubsgenerator.sample.BuildConfig;
 import com.oridev.variantsstubsgenerator.sample.R;
-import com.oridev.variantsstubsgenerator.sample.utils.AppConfig;
+import com.oridev.variantsstubsgenerator.sample.utils.premium.PaidPrivateFunctionality;
 
 /**
  * Created by Ori on 18/08/2016.
@@ -33,6 +32,8 @@ public class PaidFunctionality {
 
 	// For private methods stubs are not necessary
 	private static void privateMethod(int x) {
+		// added for testing removing unused imports
+		PaidPrivateFunctionality.someMethod();
 	}
 
 	// Stubs will also be generated for inner classes

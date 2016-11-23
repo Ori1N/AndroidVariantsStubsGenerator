@@ -71,6 +71,7 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
                 sourceDir.eachFileRecurse { file ->
 
                     if (shouldGenerateSourceFromSourceFile(file)) {
+                        Utils.logMessage("*** Generating source for file: [$file.name]")
                         generateStubForCurrentVariant(project, variant, file);
                     }
                 }
@@ -83,8 +84,11 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
         JavaStubGenerator generator = new JavaStubGenerator(sourceFile);
         String annotationFlavorTo = generator.getAnnotationFlavorTo();
 
-        if (variant.name.toLowerCase().contains(annotationFlavorTo) ||
-                variant.buildType.name.equals(annotationFlavorTo)) {
+        Utils.logMessage("*** generateStubForCurrentVariant variant [$variant.name], flavorTo [$annotationFlavorTo]");
+
+        if (annotationFlavorTo != null && (
+                variant.name.toLowerCase().contains(annotationFlavorTo) ||
+                variant.buildType.name.equals(annotationFlavorTo))) {
             String path = generator.generateStubSourceFile();
 
             Utils.logMessage("Adding generated source [$path]..", true);
@@ -149,7 +153,9 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
             if (line.contains(ANNOTATION_STR)) {
                 return true;
             }
-            if (line.contains("class ")) {
+            // improve complexity (stop scan file after reaching class
+            String className = file.name.substring(file.name.indexOf(".java"));
+            if (line.contains("public class $className")) {
                 return false;
             }
         }
