@@ -72,13 +72,12 @@ Then, apply the 'android-apt' plugin in your module-level `build.gradle` and add
 dependencies:
 
 ```groovy
-apply plugin: 'android-apt'
+... 
 
 dependencies {
     ...
     
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.2.5'
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.3.2'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.3.6'
 }
 
 apply plugin: 'variantsstubsgenerator'
