@@ -25,7 +25,7 @@ class PaidFunctionality {
 ```
 
 So when executing `./gradlew assemblePaidDebug` a stub class will be generated 
- to `app/build/generated/source/apt/debug/free/com.oridev.variantsstubsgenerator.sample.utils.PaidFunctionality.java`
+ to `app/build/generated/source/flavors/free/com.oridev.variantsstubsgenerator.sample.utils.PaidFunctionality.java`
 ```java
 // Generated stub. Do not modify!
 class PaidFunctionality {
@@ -63,7 +63,7 @@ buildscript {
   dependencies {
     ...
   
-    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.3.2'
+    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.4.0'
   }
 }
 ```
@@ -77,7 +77,7 @@ dependencies:
 dependencies {
     ...
     
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.3.6'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.4.0'
 }
 
 apply plugin: 'variantsstubsgenerator'
