@@ -24,7 +24,7 @@ class PaidFunctionality {
 }
 ```
 
-So when executing `./gradlew assemblePaidDebug` a stub class will be generated 
+So when executing `./gradlew assembleFreeDebug` a stub class will be generated 
  to `app/build/generated/source/flavors/free/com.oridev.variantsstubsgenerator.sample.utils.PaidFunctionality.java`
 ```java
 // Generated stub. Do not modify!
@@ -40,14 +40,6 @@ So you can call `PaidFunctionality.getPaidMessage(context)`
 from the main source set and flavor `free` will compile successfully.
 
 * Android Studio recognizes the generated files.
-
-Usage notes:
-- The variant containing generating elements must be compiled first so 
- the annotation processor will be invoked and generate the files.
- In our example it means that `assemblePaid` must be called for `assembleFree` to succeed.
-- If you see the following warning on build, that's normal, and should be ignored:
-<br/>`warning: Unclosed files for the types '[com.example._d_]'; these types will not undergo annotation processing`
-
 
 
 Download
@@ -68,8 +60,7 @@ buildscript {
 }
 ```
 
-Then, apply the 'android-apt' plugin in your module-level `build.gradle` and add the library
-dependencies:
+Then, apply the plugin in your module-level `build.gradle` and add the annotation dependency:
 
 ```groovy
 ... 
