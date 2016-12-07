@@ -55,7 +55,7 @@ buildscript {
   dependencies {
     ...
   
-    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.4.0'
+    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.4.2'
   }
 }
 ```

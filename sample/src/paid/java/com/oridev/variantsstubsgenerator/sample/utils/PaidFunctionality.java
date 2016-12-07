@@ -30,6 +30,10 @@ public class PaidFunctionality {
 		return Double.valueOf(Math.random()).intValue();
 	}
 
+	public static TestEnum testEnumMethdd() {
+		return TestEnum.VALUE_1;
+	}
+
 	// For private methods stubs are not necessary
 	private static void privateMethod(int x) {
 		// added for testing removing unused imports

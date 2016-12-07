@@ -197,8 +197,12 @@ public class JavaStubGenerator {
         for (MethodSource<T> method : source.getMethods()) {
 
             if (!method.isPublic()) {
-                // remove non public methods
-                source.removeMethod(method);
+                if (source instanceof JavaEnumSource && method.isConstructor()) {
+                    method.setBody("");
+                } else {
+                    // remove non public methods
+                    source.removeMethod(method);
+                }
             } else {
                 Type<?> returnType = method.getReturnType();
                 String methodBody;
