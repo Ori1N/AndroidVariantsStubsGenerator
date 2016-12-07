@@ -30,7 +30,7 @@ So when executing `./gradlew assembleFreeDebug` a stub class will be generated
 // Generated stub. Do not modify!
 class PaidFunctionality {
 
-  public void getPaidMEssage(Context context) {
+  public void getPaidMessage(Context context) {
     return null;
   }
 }

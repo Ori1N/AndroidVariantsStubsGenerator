@@ -13,7 +13,7 @@ public class PathsUtils {
     private static final String BUILD_RELATIVE_PATH = "generated/source/flavors/";
 
     public static String getTargetSourceSetPath(String buildDir, String flavorTo) {
-        return buildDir + "/" + BUILD_RELATIVE_PATH + flavorTo;
+        return buildDir + "/" + BUILD_RELATIVE_PATH + flavorTo + "/java";
     }
 
 

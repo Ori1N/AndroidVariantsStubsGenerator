@@ -115,7 +115,7 @@ public class JavaStubGenerator {
         String targetSourceSet = PathsUtils.getTargetSourceSetPath(buildDir, targetFlavor);
         Utils.logMessage("*** targetSourceSet [" + targetSourceSet + "], sourcePackage [" + sourcePackage + "]");
 
-        return targetSourceSet + "/java/" + sourcePackage;
+        return targetSourceSet + "/" + sourcePackage;
     }
 
     private static String getBuildDir(String exampleSourcePath, String packagePath) {
