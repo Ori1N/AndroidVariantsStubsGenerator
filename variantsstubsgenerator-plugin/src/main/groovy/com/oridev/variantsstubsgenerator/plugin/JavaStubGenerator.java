@@ -206,7 +206,7 @@ public class JavaStubGenerator {
             } else {
                 Type<?> returnType = method.getReturnType();
                 String methodBody;
-                if (returnType.getName().equals("void")) {
+                if (returnType == null || returnType.getName().equals("void")) {
                     methodBody = "";
                 } else {
                     String returnValue = getReturnStringValue(returnType);
