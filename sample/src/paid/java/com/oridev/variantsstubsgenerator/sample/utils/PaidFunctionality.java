@@ -13,9 +13,13 @@ import com.oridev.variantsstubsgenerator.sample.utils.premium.PaidPrivateFunctio
 @RequiresVariantStub(
 // flavorTo is the flavor we want stubs to be generated to.
 flavorTo = "free")
-public class PaidFunctionality {
+public class PaidFunctionality extends TestConstructor {
 
-    public static @Nullable String getPaidMessage(Context context) {
+	protected PaidFunctionality(int param) {
+		super(param);
+	}
+
+	public static @Nullable String getPaidMessage(Context context) {
         return context.getString(R.string.message_orange_success);
     }
 

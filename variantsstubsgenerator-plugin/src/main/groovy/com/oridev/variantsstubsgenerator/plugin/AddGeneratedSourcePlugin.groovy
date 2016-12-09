@@ -55,7 +55,14 @@ public class AddGeneratedSourcePlugin implements Plugin<Project> {
     void generateFilesBeforeCompile(def project) {
         project.android.applicationVariants.all { variant ->
             variant.javaCompile.doFirst {
-                generateFilesForVariant(project, variant);
+                try {
+                    generateFilesForVariant(project, variant);
+                } catch (Throwable e) {
+                    Utils.logMessage(
+                            "Warning: Failed to generate flavors stubs, this build might fail for missing classes.\n" +
+                                    "Exception: " + e);
+                    e.printStackTrace();
+                }
             }
         }
     }

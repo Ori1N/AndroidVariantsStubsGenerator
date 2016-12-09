@@ -196,28 +196,53 @@ public class JavaStubGenerator {
         // handle source methods
         for (MethodSource<T> method : source.getMethods()) {
 
-            if (!method.isPublic()) {
-                if (source instanceof JavaEnumSource && method.isConstructor()) {
-                    method.setBody("");
-                } else {
-                    // remove non public methods
-                    source.removeMethod(method);
-                }
+            if (shouldRemoveMethod(source, method)) {
+                source.removeMethod(method);
+
             } else {
-                Type<?> returnType = method.getReturnType();
-                String methodBody;
-                if (returnType == null || returnType.getName().equals("void")) {
-                    methodBody = "";
-                } else {
-                    String returnValue = getReturnStringValue(returnType);
-                    methodBody = "return " + returnValue + ";";
-                }
+                String methodBody = getMethodBody(method);
                 method.setBody(methodBody);
             }
         }
+    }
 
+    private static <T extends JavaSource<T>> boolean shouldRemoveMethod(MethodHolderSource<T> type, MethodSource<T> method) {
+        if (!method.isPrivate()) {
+            return false;
+        }
 
+        if (type instanceof JavaEnumSource && method.isConstructor()) {
+            return false;
+        }
 
+        if (method.getAnnotation(Override.class) != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static <T extends JavaSource<T>> String getMethodBody(MethodSource<T> method) {
+        String methodBody = "";
+
+        if (method.isConstructor()) {
+
+            String methodCurrentBody = method.getBody();
+            if (methodCurrentBody.startsWith("super(")) {
+                methodBody = methodCurrentBody.substring(0, methodCurrentBody.indexOf(';') + 1);
+            }
+
+        } else {
+
+            Type<?> returnType = method.getReturnType();
+            if (!returnType.getName().equals("void")) {
+                // for methods with non-void return type - add return statement
+                String returnValue = getReturnStringValue(returnType);
+                methodBody = "return " + returnValue + ";";
+            }
+        }
+
+        return methodBody;
     }
 
     private static <T extends JavaSource<T>> void handleSourceNestedTypes(TypeHolderSource<T> source) {
