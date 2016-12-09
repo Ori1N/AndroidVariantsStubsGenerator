@@ -55,7 +55,7 @@ buildscript {
   dependencies {
     ...
   
-    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.4.2'
+    classpath 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-plugin:0.4.5'
   }
 }
 ```
@@ -68,7 +68,7 @@ Then, apply the plugin in your module-level `build.gradle` and add the annotatio
 dependencies {
     ...
     
-    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.4.0'
+    compile 'com.oridev.variantsstubsgenerator:variantsstubsgenerator-annotation:0.4.5'
 }
 
 apply plugin: 'variantsstubsgenerator'
